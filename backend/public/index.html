@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Curie T₍C₎ predictor</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #7e92c0;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .app {
+      width: 100%;
+      max-width: 720px;
+      padding: 24px 16px 40px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .title {
+      font-size: 44px;
+      font-weight: 800;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      align-items: center;
+    }
+    .subtitle {
+      font-size: 26px;
+      color: #b11402;
+      margin-bottom: 30px;
+      justify-content: center;
+    }
+    .lang-toggle button {
+      background: transparent;
+      border: 3px solid #4b5563;
+      color: #9ca3af;
+      padding: 8px 20px;
+      justify-content: center;
+      margin-left: 8px;
+      border-radius: 999px;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .lang-toggle button.active {
+      background: #f97316;
+      border-color: #f97316;
+      color: #111827;
+      justify-content: center;
+    }
+    .card {
+      background: #020617;
+      border-radius: 18px;
+      padding: 30px 30px 32px;
+      border: 2px solid #1e293b;
+      box-shadow: 0 30px 68px rgba(15,23,42,0.8);
+    }
+    label {
+      display: block;
+      font-size: 34px;
+      margin-bottom: 8px;
+      color: #e5e7eb;
+      justify-content: center;
+    }
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      resize: vertical;
+      padding: 16px 20px;
+      border-radius: 15px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 26px;
+      
+    }
+    textarea::placeholder { color: #6b7280; }
+    .hint {
+      font-size: 24px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    button.primary {
+      background: #f97316;
+      border: none;
+      color: #111827;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 28px;
+      font-weight: 600;
+      cursor: pointer;
+      justify-content: center;
+    }
+    button.primary:disabled {
+      opacity: 0.6;
+      cursor: default;
+      justify-content: center;
+    }
+    .status {
+      font-size: 24px;
+      color: #9ca3af;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 26px;
+    }
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+    }
+    th {
+      border-bottom: 1px solid #1f2937;
+      color: #9ca3af;
+      font-weight: 500;
+    }
+    tr:nth-child(even) td {
+      background: rgba(15,23,42,0.6);
+    }
+    .formula-col { width: 45%; }
+    .tc-col { width: 27%; }
+    .tc-deg-col { width: 28%; }
+    .error { color: #fca5a5; font-size: 12px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- HEADER + LANGUAGE TOGGLE: заголовок страницы и переключатель RU/EN -->
+    <header>
+      <div>
+        <div class="title">
+          <span>🧲</span>
+          <span id="title-text">Предсказание температуры Кюри</span>
+        </div>
+        <div class="subtitle" id="subtitle-text">
+          Введите формулы (по одной на строку) и получите оценку T<sub>C</sub> в K и °C
+        </div>
+      </div>
+      <div class="lang-toggle">
+        <button data-lang="ru" class="active">RU</button>
+        <button data-lang="en">EN</button>
+      </div>
+    </header>
+
+    <!-- MAIN CARD: ввод формул, кнопка предсказания и таблица результатов -->
+    <div class="card">
+      <label for="formulas" id="label-formulas">Формулы</label>
+      <textarea id="formulas" placeholder="Fe3O4&#10;Nd2Fe14B&#10;CoFe2O4"></textarea>
+      <div class="hint" id="hint-text">
+        Одна формула на строку. Пустые строки и строки, начинающиеся с #, игнорируются.
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="btn-predict">Предсказать T<sub>C</sub></button>
+        <div class="status" id="status"></div>
+      </div>
+      <div class="error" id="error"></div>
+
+      <table id="results-table" style="display:none;">
+        <thead>
+          <tr>
+            <th class="formula-col" id="th-formula">Формула</th>
+            <th class="tc-col" id="th-tc-k">T<sub>C</sub> (K)</th>
+            <th class="tc-deg-col" id="th-tc-c">T<sub>C</sub> (°C)</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+
+    <!-- LABEL CARD: форма для отправки пользовательской разметки -->
+    <div class="card" style="margin-top: 32px;">
+      <h2 id="label-card-title" style="margin-top: 0; margin-bottom: 12px; font-size: 22px;">
+        Добавить разметку (T<sub>C</sub>, сингония, источник)
+      </h2>
+
+      <!-- Формула -->
+      <div style="margin-bottom: 10px;">
+        <label id="label-formula-label" for="label-formula">Формула *</label>
+        <input
+          id="label-formula"
+          type="text"
+          placeholder="Fe3O4, Nd2Fe14B"
+          style="width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid #1f2937;"
+        />
+      </div>
+
+      <!-- Температура Кюри + единицы -->
+      <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+        <div style="flex: 1;">
+          <label id="label-tc-label" for="label-tc-value">Температура Кюри *</label>
+          <input
+            id="label-tc-value"
+            type="number"
+            step="0.1"
+            min="0"
+            max="2000"
+            placeholder="Например, 785"
+            style="width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid #1f2937;"
+          />
+        </div>
+        <div style="width: 120px;">
+          <label id="label-tc-unit-label" for="label-tc-unit">Единицы</label>
+          <select
+            id="label-tc-unit"
+            style="width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid #1f2937;"
+          >
+            <option value="K">K</option>
+            <option value="C">°C</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Константа анизотропии -->
+      <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+        <div style="flex: 1;">
+          <label id="label-aniso-label" for="label-aniso">Константа анизотропии (МДж/м³)</label>
+          <input
+            id="label-aniso"
+            type="number"
+            step="0.01"
+            min="0"
+            max="100"
+            placeholder="Например, 0.85"
+            style="width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid #1f2937;"
+          />
+        </div>
+      </div>
+
+      <!-- Сингония -->
+      <div style="margin-bottom: 10px;">
+        <label id="label-syn-label" for="label-syn">Сингония (необязательно)</label>
+        <select
+          id="label-syn"
+          style="width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid #1f2937;"
+        >
+          <option value="">— не указано —</option>
+          <option value="триклинная">триклинная</option>
+          <option value="моноклинная">моноклинная</option>
+          <option value="ромбическая">ромбическая</option>
+          <option value="тетрагональная">тетрагональная</option>
+          <option value="гексагональная">гексагональная</option>
+          <option value="ромбоэдрическая">ромбоэдрическая</option>
+          <option value="кубическая">кубическая</option>
+        </select>
+      </div>
+
+      <!-- Источник -->
+      <div style="margin-bottom: 10px;">
+        <label id="label-source-label" for="label-source">Источник (статья, DOI, база)</label>
+        <input
+          id="label-source"
+          type="text"
+          placeholder="Например, DOI:10.1234/..."
+          style="width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid #1f2937;"
+        />
+      </div>
+
+      <!-- Комментарий -->
+      <div style="margin-bottom: 10px;">
+        <label id="label-comment-label" for="label-comment">Комментарий</label>
+        <textarea
+          id="label-comment"
+          rows="2"
+          placeholder="Дополнительные примечания, условия измерений и т.д."
+          style="width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid #1f2937;"
+        ></textarea>
+      </div>
+
+      <!-- Кнопка и статус -->
+      <div class="actions">
+        <button class="primary" id="btn-label">Отправить разметку</button>
+        <div class="status" id="label-status"></div>
+      </div>
+      <div class="error" id="label-error"></div>
+    </div>
+
+  </div>
+
+  <!-- APP LOGIC: переводы, работа с DOM и запросы к backend -->
+  <script>
+    // BACKEND ENDPOINT: адрес Node.js API для предсказаний
+    const apiUrl = "/api/predict";
+
+    // TRANSLATIONS: все текстовые строки интерфейса для RU и EN
+    const translations = {
+      ru: {
+        title: "Предсказание температуры Кюри",
+        subtitle: "Введите формулы (по одной на строку) и получите оценку T\u2093 в K и \u00b0C",
+        labelFormulas: "Формулы",
+        hint: "Одна формула на строку. Пустые строки и строки, начинающиеся с #, игнорируются.",
+        btnPredict: "Предсказать T\u2093",
+        thFormula: "Формула",
+        thTcK: "T\u2093 (K)",
+        thTcC: "T\u2093 (\u00b0C)",
+        statusIdle: "",
+        statusLoading: "Выполняется запрос...",
+        statusDone: (n) => `Получено ${n} предсказаний`,
+        errorNoFormulas: "Введите хотя бы одну формулу.",
+        errorRequest: "Ошибка запроса. Проверьте, что backend запущен.",
+
+        // LABEL FORM (RU)
+        labelCardTitle: "Добавить разметку (T\u2093, сингония, источник)",
+        labelFormulaLabel: "Формула *",
+        labelFormulaPh: "Fe3O4, Nd2Fe14B",
+        labelTcLabel: "Температура Кюри *",
+        labelTcPh: "Например, 785",
+        labelTcUnitLabel: "Единицы",
+        labelAnisoLabel: "Константа анизотропии (МДж/м³)",
+        labelAnisoPh: "Например, 0.85",
+        labelSynLabel: "Сингония (необязательно)",
+        synOptions: [
+          "— не указано —",
+          "триклинная",
+          "моноклинная",
+          "ромбическая",
+          "тетрагональная",
+          "гексагональная",
+          "ромбоэдрическая",
+          "кубическая"
+        ],
+        labelSourceLabel: "Источник (статья, DOI, база)",
+        labelSourcePh: "Например, DOI:10.1234/...",
+        labelCommentLabel: "Комментарий",
+        labelCommentPh: "Дополнительные примечания, условия измерений и т.д.",
+        btnLabel: "Отправить разметку",
+        labelStatusIdle: "",
+        labelStatusSuccess: "Разметка отправлена.",
+        labelErrorRequired: "Укажите хотя бы формулу и температуру.",
+        labelErrorRequest: "Не удалось сохранить разметку."
+      },
+      en: {
+        title: "Curie temperature prediction",
+        subtitle: "Enter formulas (one per line) to get T\u2093 in K and \u00b0C",
+        labelFormulas: "Formulas",
+        hint: "One formula per line. Empty lines and lines starting with # are ignored.",
+        btnPredict: "Predict T\u2093",
+        thFormula: "Formula",
+        thTcK: "T\u2093 (K)",
+        thTcC: "T\u2093 (\u00b0C)",
+        statusIdle: "",
+        statusLoading: "Request in progress...",
+        statusDone: (n) => `Received ${n} predictions`,
+        errorNoFormulas: "Enter at least one formula.",
+        errorRequest: "Request error. Check that backend is running.",
+
+        // LABEL FORM (EN)
+        labelCardTitle: "Add annotation (T\u2093, symmetry, source)",
+        labelFormulaLabel: "Formula *",
+        labelFormulaPh: "Fe3O4, Nd2Fe14B",
+        labelTcLabel: "Curie temperature *",
+        labelTcPh: "e.g., 785",
+        labelTcUnitLabel: "Units",
+        labelAnisoLabel: "Anisotropy constant (MJ/m³)",
+        labelAnisoPh: "e.g., 0.85",
+        labelSynLabel: "Crystal system (optional)",
+        synOptions: [
+          "— not specified —",
+          "triclinic",
+          "monoclinic",
+          "orthorhombic",
+          "tetragonal",
+          "hexagonal",
+          "rhombohedral",
+          "cubic"
+        ],
+        labelSourceLabel: "Source (paper, DOI, database)",
+        labelSourcePh: "e.g., DOI:10.1234/...",
+        labelCommentLabel: "Comment",
+        labelCommentPh: "Additional notes, measurement conditions, etc.",
+        btnLabel: "Submit annotation",
+        labelStatusIdle: "",
+        labelStatusSuccess: "Annotation submitted.",
+        labelErrorRequired: "Please provide at least formula and temperature.",
+        labelErrorRequest: "Failed to save annotation."
+      }
+    };
+
+    let currentLang = "ru";
+
+    // DOM REFERENCES: ссылки на элементы, чтобы не искать их каждый раз
+    const els = {
+      title: document.getElementById("title-text"),
+      subtitle: document.getElementById("subtitle-text"),
+      labelFormulas: document.getElementById("label-formulas"),
+      hint: document.getElementById("hint-text"),
+      btnPredict: document.getElementById("btn-predict"),
+      thFormula: document.getElementById("th-formula"),
+      thTcK: document.getElementById("th-tc-k"),
+      thTcC: document.getElementById("th-tc-c"),
+      status: document.getElementById("status"),
+      error: document.getElementById("error"),
+      textarea: document.getElementById("formulas"),
+      table: document.getElementById("results-table"),
+      tbody: document.getElementById("results-body"),
+
+      // LABEL FORM
+      labelCardTitle: document.getElementById("label-card-title"),
+      labelFormulaLabel: document.getElementById("label-formula-label"),
+      labelFormulaInput: document.getElementById("label-formula"),
+      labelTcLabel: document.getElementById("label-tc-label"),
+      labelTcInput: document.getElementById("label-tc-value"),
+      labelTcUnitLabel: document.getElementById("label-tc-unit-label"),
+      labelTcUnitSelect: document.getElementById("label-tc-unit"),
+      labelAnisoLabel: document.getElementById("label-aniso-label"),
+      labelAnisoInput: document.getElementById("label-aniso"),
+      labelSynLabel: document.getElementById("label-syn-label"),
+      labelSynSelect: document.getElementById("label-syn"),
+      labelSourceLabel: document.getElementById("label-source-label"),
+      labelSourceInput: document.getElementById("label-source"),
+      labelCommentLabel: document.getElementById("label-comment-label"),
+      labelCommentInput: document.getElementById("label-comment"),
+      labelStatus: document.getElementById("label-status"),
+      labelError: document.getElementById("label-error"),
+      labelButton: document.getElementById("btn-label")
+    };
+
+    // APPLY TRANSLATIONS: подставляет строки текущего языка в UI
+    function applyTranslations() {
+      const t = translations[currentLang];
+      els.title.textContent = t.title;
+      els.subtitle.textContent = t.subtitle;
+      els.labelFormulas.textContent = t.labelFormulas;
+      els.hint.textContent = t.hint;
+      els.btnPredict.innerHTML = t.btnPredict.replace("T\u2093", "T<sub>C</sub>");
+      els.thFormula.textContent = t.thFormula;
+      els.thTcK.innerHTML = t.thTcK.replace("T\u2093", "T<sub>C</sub>");
+      els.thTcC.innerHTML = t.thTcC.replace("T\u2093", "T<sub>C</sub>");
+      els.status.textContent = t.statusIdle;
+      els.error.textContent = "";
+
+      // label form texts
+      if (els.labelCardTitle) els.labelCardTitle.textContent = t.labelCardTitle;
+      if (els.labelFormulaLabel) els.labelFormulaLabel.textContent = t.labelFormulaLabel;
+      if (els.labelFormulaInput) els.labelFormulaInput.placeholder = t.labelFormulaPh;
+      if (els.labelTcLabel) els.labelTcLabel.textContent = t.labelTcLabel;
+      if (els.labelTcInput) els.labelTcInput.placeholder = t.labelTcPh;
+      if (els.labelTcUnitLabel) els.labelTcUnitLabel.textContent = t.labelTcUnitLabel;
+      if (els.labelAnisoLabel) els.labelAnisoLabel.textContent = t.labelAnisoLabel;
+      if (els.labelAnisoInput) els.labelAnisoInput.placeholder = t.labelAnisoPh;
+      if (els.labelSynLabel) els.labelSynLabel.textContent = t.labelSynLabel;
+      if (els.labelSourceLabel) els.labelSourceLabel.textContent = t.labelSourceLabel;
+      if (els.labelSourceInput) els.labelSourceInput.placeholder = t.labelSourcePh;
+      if (els.labelCommentLabel) els.labelCommentLabel.textContent = t.labelCommentLabel;
+      if (els.labelCommentInput) els.labelCommentInput.placeholder = t.labelCommentPh;
+      if (els.labelButton) els.labelButton.textContent = t.btnLabel;
+      if (els.labelStatus) els.labelStatus.textContent = t.labelStatusIdle;
+      if (els.labelError) els.labelError.textContent = "";
+
+      // сингония: локализация текста опций
+      if (els.labelSynSelect && Array.isArray(t.synOptions)) {
+        const opts = els.labelSynSelect.options;
+        for (let i = 0; i < opts.length && i < t.synOptions.length; i++) {
+          opts[i].textContent = t.synOptions[i];
+        }
+      }
+    }
+
+    // LANGUAGE SWITCH: обработчики кнопок RU/EN
+    document.querySelectorAll(".lang-toggle button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentLang = btn.dataset.lang;
+        document.querySelectorAll(".lang-toggle button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        applyTranslations();
+      });
+    });
+
+    // INITIAL RENDER: применяем переводы при загрузке страницы
+    applyTranslations();
+
+    // PREDICT HANDLER: собирает формулы, шлёт запрос на backend и рисует таблицу
+    document.getElementById("btn-predict").addEventListener("click", async () => {
+      const t = translations[currentLang];
+      els.error.textContent = "";
+      els.status.textContent = "";
+      els.tbody.innerHTML = "";
+      els.table.style.display = "none";
+
+      const raw = els.textarea.value || "";
+      const lines = raw.split(/\r?\n/).map(s => s.trim()).filter(s => s && !s.startsWith("#"));
+      if (lines.length === 0) {
+        els.error.textContent = t.errorNoFormulas;
+        return;
+      }
+
+      els.btnPredict.disabled = true;
+      els.status.textContent = t.statusLoading;
+
+      try {
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ formulas: lines })
+        });
+        if (!res.ok) throw new Error("Bad response");
+        const data = await res.json();
+
+        if (!data.results || !Array.isArray(data.results) || data.results.length === 0) {
+          els.status.textContent = t.statusDone(0);
+          return;
+        }
+
+        data.results.forEach(r => {
+          const tr = document.createElement("tr");
+          const tdF = document.createElement("td");
+          const tdK = document.createElement("td");
+          const tdC = document.createElement("td");
+          tdF.textContent = r.formula;
+          tdK.textContent = r.Tc_K.toFixed(1);
+          tdC.textContent = r.Tc_C.toFixed(1);
+          tr.appendChild(tdF);
+          tr.appendChild(tdK);
+          tr.appendChild(tdC);
+          els.tbody.appendChild(tr);
+        });
+
+        els.table.style.display = "";
+        els.status.textContent = t.statusDone(data.results.length);
+      } catch (e) {
+        console.error(e);
+        els.error.textContent = t.errorRequest;
+      } finally {
+        els.btnPredict.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
