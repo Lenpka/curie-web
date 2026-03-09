@@ -10,14 +10,22 @@ from __future__ import annotations
 
 from typing import Iterable, List, Tuple
 
+import os
+import sys
+
 import joblib
 import numpy as np
+
+# Добавляем корень репозитория в PYTHONPATH, чтобы видеть train_curie_three_versions.py
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
 
 from train_curie_three_versions import BASE_DIR, formula_to_vector
 
 
-MODEL_PATH = BASE_DIR + "/curie_model.joblib"
-SCALER_PATH = BASE_DIR + "/curie_scaler.joblib"
+MODEL_PATH = os.path.join(BASE_DIR, "curie_model.joblib")
+SCALER_PATH = os.path.join(BASE_DIR, "curie_scaler.joblib")
 
 
 class CurieModelService:

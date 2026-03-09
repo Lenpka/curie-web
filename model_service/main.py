@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
 
-from model_service.model_loader import curie_model_service
-from model_service.schemas import PredictRequest, PredictResponse, PredictResult
+from model_loader import curie_model_service
+from schemas import PredictRequest, PredictResponse, PredictResult
 
 
 app = FastAPI(title="Curie Temperature Model Service", version="0.1.0")
