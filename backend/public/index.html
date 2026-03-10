@@ -485,60 +485,63 @@
     applyTranslations();
 
     // PREDICT HANDLER: собирает формулы, шлёт запрос на backend и рисует таблицу
-    document.getElementById("btn-predict").addEventListener("click", async () => {
-      const t = translations[currentLang];
-      els.error.textContent = "";
-      els.status.textContent = "";
-      els.tbody.innerHTML = "";
-      els.table.style.display = "none";
+    if (els.btnPredict) {
+      els.btnPredict.addEventListener("click", async () => {
+        const t = translations[currentLang];
+        if (els.error) els.error.textContent = "";
+        if (els.status) els.status.textContent = "";
+        if (els.tbody) els.tbody.innerHTML = "";
+        if (els.table) els.table.style.display = "none";
 
-      const raw = els.textarea.value || "";
-      const lines = raw.split(/\r?\n/).map(s => s.trim()).filter(s => s && !s.startsWith("#"));
-      if (lines.length === 0) {
-        els.error.textContent = t.errorNoFormulas;
-        return;
-      }
-
-      els.btnPredict.disabled = true;
-      els.status.textContent = t.statusLoading;
-
-      try {
-        const res = await fetch(apiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ formulas: lines })
-        });
-        if (!res.ok) throw new Error("Bad response");
-        const data = await res.json();
-
-        if (!data.results || !Array.isArray(data.results) || data.results.length === 0) {
-          els.status.textContent = t.statusDone(0);
+        const raw = (els.textarea && els.textarea.value) || "";
+        const lines = raw.split(/\r?\n/).map(s => s.trim()).filter(s => s && !s.startsWith("#"));
+        if (lines.length === 0) {
+          if (els.error) els.error.textContent = t.errorNoFormulas;
           return;
         }
 
-        data.results.forEach(r => {
-          const tr = document.createElement("tr");
-          const tdF = document.createElement("td");
-          const tdK = document.createElement("td");
-          const tdC = document.createElement("td");
-          tdF.textContent = r.formula;
-          tdK.textContent = r.Tc_K.toFixed(1);
-          tdC.textContent = r.Tc_C.toFixed(1);
-          tr.appendChild(tdF);
-          tr.appendChild(tdK);
-          tr.appendChild(tdC);
-          els.tbody.appendChild(tr);
-        });
+        if (els.btnPredict) els.btnPredict.disabled = true;
+        if (els.status) els.status.textContent = t.statusLoading;
 
-        els.table.style.display = "";
-        els.status.textContent = t.statusDone(data.results.length);
-      } catch (e) {
-        console.error(e);
-        els.error.textContent = t.errorRequest;
-      } finally {
-        els.btnPredict.disabled = false;
-      }
-    });
+        try {
+          const res = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ formulas: lines })
+          });
+          if (!res.ok) throw new Error("Bad response");
+          const data = await res.json();
+
+          if (!data.results || !Array.isArray(data.results) || data.results.length === 0) {
+            if (els.status) els.status.textContent = t.statusDone(0);
+            return;
+          }
+
+          if (els.tbody) {
+            data.results.forEach(r => {
+              const tr = document.createElement("tr");
+              const tdF = document.createElement("td");
+              const tdK = document.createElement("td");
+              const tdC = document.createElement("td");
+              tdF.textContent = r.formula;
+              tdK.textContent = r.Tc_K.toFixed(1);
+              tdC.textContent = r.Tc_C.toFixed(1);
+              tr.appendChild(tdF);
+              tr.appendChild(tdK);
+              tr.appendChild(tdC);
+              els.tbody.appendChild(tr);
+            });
+          }
+          if (els.table) els.table.style.display = "";
+          if (els.status) els.status.textContent = t.statusDone(data.results.length);
+        } catch (e) {
+          console.error(e);
+          if (els.error) els.error.textContent = t.errorRequest;
+        } finally {
+          if (els.btnPredict) els.btnPredict.disabled = false;
+        }
+      });
+    }
   </script>
 </body>
 </html>
