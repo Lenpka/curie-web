@@ -433,16 +433,16 @@
     // APPLY TRANSLATIONS: подставляет строки текущего языка в UI
     function applyTranslations() {
       const t = translations[currentLang];
-      els.title.textContent = t.title;
-      els.subtitle.textContent = t.subtitle;
-      els.labelFormulas.textContent = t.labelFormulas;
-      els.hint.textContent = t.hint;
-      els.btnPredict.innerHTML = t.btnPredict.replace("T\u2093", "T<sub>C</sub>");
-      els.thFormula.textContent = t.thFormula;
-      els.thTcK.innerHTML = t.thTcK.replace("T\u2093", "T<sub>C</sub>");
-      els.thTcC.innerHTML = t.thTcC.replace("T\u2093", "T<sub>C</sub>");
-      els.status.textContent = t.statusIdle;
-      els.error.textContent = "";
+      if (els.title) els.title.textContent = t.title;
+      if (els.subtitle) els.subtitle.textContent = t.subtitle;
+      if (els.labelFormulas) els.labelFormulas.textContent = t.labelFormulas;
+      if (els.hint) els.hint.textContent = t.hint;
+      if (els.btnPredict) els.btnPredict.innerHTML = t.btnPredict.replace("T\u2093", "T<sub>C</sub>");
+      if (els.thFormula) els.thFormula.textContent = t.thFormula;
+      if (els.thTcK) els.thTcK.innerHTML = t.thTcK.replace("T\u2093", "T<sub>C</sub>");
+      if (els.thTcC) els.thTcC.innerHTML = t.thTcC.replace("T\u2093", "T<sub>C</sub>");
+      if (els.status) els.status.textContent = t.statusIdle;
+      if (els.error) els.error.textContent = "";
 
       // label form texts
       if (els.labelCardTitle) els.labelCardTitle.textContent = t.labelCardTitle;

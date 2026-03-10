@@ -1,3 +1,4 @@
+import path from "path";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -17,12 +18,15 @@ app.use(
   })
 );
 app.use(express.json({ limit: config.bodyLimit }));
-app.use("/api", apiRateLimiter);
 
+// Сначала статика, чтобы главная страница и скрипты грузились без 404
+const publicDir = path.join(__dirname, "..", "public");
+app.use(express.static(publicDir));
+
+app.use("/api", apiRateLimiter);
 const apiRouter = express.Router();
 registerPredictRoute(apiRouter);
 registerLabelRoute(apiRouter);
-
 app.use("/api", apiRouter);
 
 app.use(errorHandler);
@@ -30,8 +34,3 @@ app.use(errorHandler);
 app.listen(config.port, () => {
   console.log(`Backend listening on port ${config.port}`);
 });
-
-import path from "path";
-
-const publicDir = path.join(__dirname, "..", "public");
-app.use(express.static(publicDir));
