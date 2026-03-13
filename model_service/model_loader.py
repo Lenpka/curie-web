@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from typing import Iterable, List, Tuple
 
+from errors import InvalidFormulaError
+
 import os
 import sys
 
@@ -52,7 +54,11 @@ class CurieModelService:
             formula = (raw_formula or "").strip()
             if not formula or formula.startswith("#"):
                 continue
-            vec = formula_to_vector(formula)
+
+            try:
+                vec = formula_to_vector(formula)
+            except Exception as e:
+                raise InvalidFormulaError(formula, message = str(e)) from e
             x = self.scaler.transform(np.asarray(vec).reshape(1, -1))
             tc_k = float(self.model.predict(x)[0])
             tc_c = tc_k - 273.15

@@ -10,7 +10,8 @@ from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
 
-from model_loader import curie_model_service, InvalidFormulaError
+from model_loader import curie_model_service
+from errors import InvalidFormulaError
 from schemas import PredictRequest, PredictResponse, PredictResult
 
 
