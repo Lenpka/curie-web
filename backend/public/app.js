@@ -19,6 +19,8 @@ const translations = {
     statusDone: (n) => `Получено ${n} предсказаний`,
     errorNoFormulas: "Введите хотя бы одну формулу.",
     errorRequest: "Ошибка запроса. Проверьте, что backend запущен.",
+    errorInvalidFormula: "Формула «{formula}» не распознана.",
+    errorSuggestion: "Возможно, вы имели в виду: {suggestion}",
 
     // LABEL FORM (RU)
     labelCardTitle: "Добавить разметку (T\u2093, сингония, источник)",
@@ -67,6 +69,8 @@ const translations = {
     statusDone: (n) => `Received ${n} predictions`,
     errorNoFormulas: "Enter at least one formula.",
     errorRequest: "Request error. Check that backend is running.",
+    errorInvalidFormula: "Formula «{formula}» was not recognized.",
+    errorSuggestion: "Did you mean: {suggestion}",
 
     // LABEL FORM (EN)
     labelCardTitle: "Add annotation (T\u2093, symmetry, source)",
@@ -236,8 +240,27 @@ if (els.btnPredict) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ formulas: lines })
       });
-      if (!res.ok) throw new Error("Bad response");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+
+      // Обработка ошибки если сервер отвечает
+      if (!res.ok) {
+        if (data.code === "invalid_formula") {
+          let msg = t.errorInvalidFormula.replace("{formula}", data.formula || "?");
+          if (data.suggestion) {
+            msg += " " + t.errorSuggestion.replace("{suggestion}", data.suggestion);
+          } else if (data.message) {
+            msg += " " + data.message;
+          }
+          if (els.error) els.error.textContent = msg;
+        } else if (data.error === "Model service error") {
+          if (els.error) els.error.textContent = (data.details?.detail?.message) || t.errorRequest;
+        } else if (data.error === "Model service unavailable") {
+          if (els.error) els.error.textContent = t.errorRequest;
+        } else {
+          if (els.error) els.error.textContent = t.errorRequest;
+        }
+        return;
+      }
 
       if (
         !data.results ||
@@ -275,3 +298,65 @@ if (els.btnPredict) {
   });
 }
 
+// Разметка: POST /api/label → backend сохраняет в data/user_labels.csv
+const labelApiUrl = "/api/label";
+if (els.labelButton) {
+  els.labelButton.addEventListener("click", async () => {
+    const t = translations[currentLang];
+    if (els.labelStatus) els.labelStatus.textContent = "";
+    if (els.labelError) els.labelError.textContent = "";
+
+    const formula = els.labelFormulaInput?.value?.trim() ?? "";
+    const tcRaw = els.labelTcInput?.value?.trim() ?? "";
+    const tcUnit = (els.labelTcUnitSelect?.value === "C" ? "C" : "K");
+    const synagonia = els.labelSynSelect?.value?.trim() || undefined;
+    const source = els.labelSourceInput?.value?.trim() || undefined;
+    const comment = els.labelCommentInput?.value?.trim() || undefined;
+
+    if (!formula) {
+      if (els.labelError) els.labelError.textContent = t.labelErrorRequired;
+      return;
+    }
+    const tcNum = parseFloat(tcRaw);
+    if (!Number.isFinite(tcNum) || tcNum < 0) {
+      if (els.labelError) els.labelError.textContent = t.labelErrorRequired;
+      return;
+    }
+
+    els.labelButton.disabled = true;
+    if (els.labelStatus) els.labelStatus.textContent = t.statusLoading;
+
+    try {
+      const res = await fetch(labelApiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formula,
+          tcValue: tcNum,
+          tcUnit,
+          synagonia,
+          source,
+          comment
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.status === "ok") {
+        if (els.labelStatus) els.labelStatus.textContent = t.labelStatusSuccess;
+        if (els.labelFormulaInput) els.labelFormulaInput.value = "";
+        if (els.labelTcInput) els.labelTcInput.value = "";
+        if (els.labelAnisoInput) els.labelAnisoInput.value = "";
+        if (els.labelSynSelect) els.labelSynSelect.selectedIndex = 0;
+        if (els.labelSourceInput) els.labelSourceInput.value = "";
+        if (els.labelCommentInput) els.labelCommentInput.value = "";
+      } else {
+        if (els.labelError) els.labelError.textContent = data.error || t.labelErrorRequest;
+      }
+    } catch (e) {
+      console.error(e);
+      if (els.labelError) els.labelError.textContent = t.labelErrorRequest;
+    } finally {
+      els.labelButton.disabled = false;
+    }
+  });
+}

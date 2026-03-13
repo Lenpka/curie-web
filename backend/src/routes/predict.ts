@@ -1,6 +1,7 @@
 import type { Request, Response, Router } from "express";
 import { predictCurieTemperature } from "../services/modelService";
 
+
 export function registerPredictRoute(router: Router): void {
   router.post("/predict", async (req: Request, res: Response) => {
     const { formulas } = req.body as { formulas?: unknown };
@@ -10,7 +11,6 @@ export function registerPredictRoute(router: Router): void {
         .status(400)
         .json({ error: "Field 'formulas' must be a non-empty array of strings" });
     }
-
     const cleaned = formulas
       .map((f) => (typeof f === "string" ? f.trim() : ""))
       .filter((f) => f.length > 0);
@@ -18,14 +18,33 @@ export function registerPredictRoute(router: Router): void {
     if (cleaned.length === 0) {
       return res
         .status(400)
-        .json({ error: "No valid formulas provided after cleanup" });
+        .json({ error: "No valid formula provided after cleanup" });
     }
 
     try {
       const results = await predictCurieTemperature(cleaned);
       return res.json({ results });
-    } catch (err) {
-      console.error("Predict error:", err);
+    } catch (err: unknown) {
+      const e = err as { type?: string; status?: number; data?: unknown };
+      if (e?.type === "MODEL_RESPONSE_ERROR") {
+        const status = e.status ?? 502;
+        const data = (e.data ?? {}) as { detail?: { code?: string; formula?: string; message?: string; suggestion?: string } };
+        console.error("Model service responded with error:", status, data);
+
+        if (status === 400 && data.detail?.code === "invalid_formula") {
+          return res.status(400).json({
+            code: "invalid_formula",
+            formula: data.detail.formula,
+            message: data.detail.message,
+            suggestion: data.detail.suggestion ?? null
+          });
+        }
+        return res.status(status === 200 ? 502 : status).json({
+          error: "Model service error",
+          details: data
+        });
+      }
+      console.error("Model service unavailable", err);
       return res.status(502).json({ error: "Model service unavailable" });
     }
   });

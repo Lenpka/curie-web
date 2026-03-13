@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
 
-from model_loader import curie_model_service
+from model_loader import curie_model_service, InvalidFormulaError
 from schemas import PredictRequest, PredictResponse, PredictResult
 
 
@@ -36,7 +36,17 @@ def predict(request: PredictRequest) -> PredictResponse:
         raise HTTPException(status_code=400, detail="Список формул пуст.")
 
     # Базовая реализация: пробрасывает исключения наверх.
-    tuples = curie_model_service.predict_for_formulas(request.formulas)
+    try:
+        tuples = curie_model_service.predict_for_formulas(request.formulas)
+    except InvalidFormulaError as inv:
+        detail = {
+            "code": "invalid_formula",
+            "formula": inv.formula,
+            "message": str(inv) or "Formula cannot be parsed",
+        }
+        if getattr(inv, "suggestion", None):
+            detail["suggestion"] = inv.suggestion
+        raise HTTPException(status_code=400, detail=detail)
     results = [
         PredictResult(formula=f, Tc_K=tc_k, Tc_C=tc_c) for f, tc_k, tc_c in tuples
     ]
