@@ -87,6 +87,14 @@
     .lang-toggle button:hover {
       background: #334155;
       color: var(--text);
+      /* border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      font-family: Tahoma;
+      font-size: 0.9rem;
+      font-weight: 400;
+      cursor: pointer; */
+
     }
     .lang-toggle button.active {
       background: var(--accent);
@@ -220,6 +228,7 @@
 </head>
 <body>
   <div class="app">
+
     <!-- HEADER + LANGUAGE TOGGLE: заголовок страницы и переключатель RU/EN -->
     <header>
       <div>
@@ -231,11 +240,22 @@
           Введите формулы (по одной на строку) и получите оценку T<sub>C</sub> в K и °C
         </div>
       </div>
-      <div class="lang-toggle">
-        <button data-lang="ru" class="active">RU</button>
-        <button data-lang="en">EN</button>
-      </div>
+
+      <div class="header-controls">
+        
+        <div class="lang-toggle">
+          <button data-lang="ru" class="active">RU</button>
+          <button data-lang="en">EN</button>
+        </div>
+
+        
+        <button id = "theme-toggle" class="theme-toggle" title="Сменить тему">
+          🌙
+        </button>
+    </div>
     </header>
+
+
 
     <!-- MAIN CARD: ввод формул, кнопка предсказания и таблица результатов -->
     <div class="card card-main">
@@ -244,13 +264,15 @@
       <div class="hint" id="hint-text">
         Одна формула на строку. Пустые строки и строки, начинающиеся с #, игнорируются.
       </div>
-
+          <!-- Предсказать -->
       <div class="actions">
         <button class="primary" id="btn-predict">Предсказать T<sub>C</sub></button>
         <div class="status" id="status"></div>
       </div>
       <div class="error" id="error"></div>
 
+
+      <!-- Результаты -->
       <table id="results-table" style="display:none;">
         <thead>
           <tr>
@@ -262,6 +284,10 @@
         <tbody id="results-body"></tbody>
       </table>
     </div>
+
+
+
+
 
     <!-- LABEL CARD: форма для отправки пользовательской разметки -->
     <div class="card">

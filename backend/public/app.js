@@ -1,6 +1,9 @@
 // BACKEND ENDPOINT: адрес Node.js API для предсказаний
 const apiUrl = "/api/predict";
 
+//Тема
+const THEME_KEY = "curie-theme";
+
 // TRANSLATIONS: все текстовые строки интерфейса для RU и EN
 const translations = {
   ru: {
@@ -140,7 +143,10 @@ const els = {
   labelCommentInput: document.getElementById("label-comment"),
   labelStatus: document.getElementById("label-status"),
   labelError: document.getElementById("label-error"),
-  labelButton: document.getElementById("btn-label")
+  labelButton: document.getElementById("btn-label"),
+
+  // Цвет кнопки
+  themeToggle:document.getElementById("theme-toggle")
 };
 
 function applyTranslations() {
@@ -197,6 +203,29 @@ function applyTranslations() {
     }
   }
 }
+//Смена темы
+function applyTheme(theme){
+  const body = document.body;
+  if(theme==="dark")
+  {
+    body.classList.add("theme-dark");
+
+  }
+  else {
+    body.classList.remove("theme-dark");
+  }
+
+  if (els.themeToggle) {
+    els.themeToggle.textContent = theme === "dark" ? "☀️" : "🌙";
+  }
+
+}
+
+(function initTheme() {
+  const saved = window.localStorage.getItem(THEME_KEY);
+  const initial = saved === "dark" ||saved === "light" ? saved : "dark";
+  applyTheme(initial);
+})();
 
 document
   .querySelectorAll(".lang-toggle button")
@@ -212,7 +241,16 @@ document
   });
 
 applyTranslations();
-
+if (els.themeToggle) {
+  els.themeToggle.addEventListener("click", () => {
+    const current = document.body.classList.contains("theme-dark")
+      ? "dark"
+      : "light";
+    const next = current === "dark" ? "light" : "dark";
+    applyTheme(next);
+    window.localStorage.setItem(THEME_KEY, next);
+  });
+}
 if (els.btnPredict) {
   els.btnPredict.addEventListener("click", async () => {
     const t = translations[currentLang];
