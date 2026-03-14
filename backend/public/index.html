@@ -224,9 +224,49 @@
     .form-row { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
     .form-row .form-group { flex: 1; min-width: 0; margin-bottom: 0; }
     .form-row .form-group--unit { flex: 0 0 100px; }
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+    
+    .theme-toggle{
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 10px;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .theme-toggle:hover{
+      background: #334155;
+      color: var(--text);
+    }
+    body.theme-dark {
+      --bg: #020617;
+      --bg-card: #020617;
+      --bg-input: #020617;
+      --border: #1f2937;
+      --border-focus: #38bdf8;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --error: #f87171;
+    }
+    body.theme-light {
+      --bg: #e2e8f0;
+      --bg-card: #f8fafc;
+      --bg-input: #f1f5f9;
+      --border: #cbd5e1;
+      --border-focus: #0ea5e9;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --error: #dc2626;
+    }
   </style>
 </head>
-<body>
+<body class="theme-dark">
   <div class="app">
 
     <!-- HEADER + LANGUAGE TOGGLE: заголовок страницы и переключатель RU/EN -->
@@ -242,7 +282,7 @@
       </div>
 
       <div class="header-controls">
-        
+
         <div class="lang-toggle">
           <button data-lang="ru" class="active">RU</button>
           <button data-lang="en">EN</button>

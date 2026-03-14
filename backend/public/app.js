@@ -146,7 +146,7 @@ const els = {
   labelButton: document.getElementById("btn-label"),
 
   // Цвет кнопки
-  themeToggle:document.getElementById("theme-toggle")
+  themeToggle: document.getElementById("theme-toggle")
 };
 
 function applyTranslations() {
@@ -203,22 +203,14 @@ function applyTranslations() {
     }
   }
 }
-//Смена темы
-function applyTheme(theme){
+// Смена темы: dark = theme-dark, light = theme-light
+function applyTheme(theme) {
   const body = document.body;
-  if(theme==="dark")
-  {
-    body.classList.add("theme-dark");
-
-  }
-  else {
-    body.classList.remove("theme-dark");
-  }
-
+  body.classList.toggle("theme-dark", theme === "dark");
+  body.classList.toggle("theme-light", theme === "light");
   if (els.themeToggle) {
     els.themeToggle.textContent = theme === "dark" ? "☀️" : "🌙";
   }
-
 }
 
 (function initTheme() {
