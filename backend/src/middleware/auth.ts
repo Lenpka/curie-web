@@ -12,25 +12,25 @@ declare global {
   }
 }
 
-export function requreAuth (req: Request, res: Response, next: NextFunction): void{
+export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const userId = (req.session as any)?.userId;
   if (!userId) {
-    res.status(401).json( { error: "Unauthorized", code: "auth_required"}); // 401 - неавторизированный UnAuthorized
+    res.status(401).json({ error: "Unauthorized", code: "auth_required" });
     return;
   }
   const user = getAuthUserById(userId);
   if (!user) {
     req.session = undefined as any;
-    res.status(401).json( {error: "Unathorized", code: "auth_required"});
+    res.status(401).json({ error: "Unauthorized", code: "auth_required" });
     return;
   }
   req.user = user;
   next();
 }
 
-export function requireAdmin(req: Request, res: Response, next: NextFunction): void{
+export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   if (!req.user) {
-    res.status(401).json({error: "Unathorized", code: "auth_required"});
+    res.status(401).json({ error: "Unauthorized", code: "auth_required" });
     return;
   }
   if (req.user.role !== "admin"){
