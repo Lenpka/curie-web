@@ -87,6 +87,7 @@
     <div class="toolbar">
       <a href="/">← На главную</a>
       <button type="button" id="btn-refresh">Обновить</button>
+      <button type="button" id="admin-theme-toggle" title="Светлая/тёмная тема">🌙</button>
     </div>
     <div id="message"></div>
 
@@ -178,48 +179,46 @@
 
     document.getElementById("btn-refresh").addEventListener("click", loadData);
 
-    function downloadCsv(url, filename) {
-      return fetch(url, fetchOpts).then((res) => {
-        if (res.status === 401 || res.status === 403) {
-          showMsg("Доступ только для администратора.", "error");
-          return;
-        }
-        if (!res.ok) throw new Error("Ошибка загрузки");
-        return res.text();
-      }).then((text) => {
-        if (!text) return;
-        const bom = "\uFEFF";
-        const blob = new Blob([bom + text], { type: "text/csv;charset=utf-8" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = filename;
-        a.style.display = "none";
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(a.href);
-        }, 100);
-      }).catch(() => showMsg("Ошибка скачивания.", "error"));
+    // Скачивание: прямая ссылка с download — браузер сам отправит cookie и получит файл (Content-Disposition на сервере).
+    function downloadCsvByLink(url, filename) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 150);
     }
 
     document.getElementById("btn-download-labels-csv").addEventListener("click", () => {
-      downloadCsv("/api/labels?format=csv", "user_labels.csv");
+      downloadCsvByLink("/api/labels?format=csv", "user_labels.csv");
     });
 
     document.getElementById("btn-download-classify-csv").addEventListener("click", () => {
-      downloadCsv("/api/classifications?format=csv", "user_classifications.csv");
+      downloadCsvByLink("/api/classifications?format=csv", "user_classifications.csv");
     });
 
     loadData();
 
-    // Тема как на главной (localStorage curie-theme)
-    (function initTheme() {
-      const saved = localStorage.getItem("curie-theme");
-      const theme = (saved === "light" || saved === "dark") ? saved : "dark";
+    // Тема: тот же ключ, что на главной (curie-theme). Читаем при загрузке и даём переключатель.
+    const THEME_KEY = "curie-theme";
+    function applyAdminTheme(theme) {
       document.body.classList.toggle("theme-dark", theme === "dark");
       document.body.classList.toggle("theme-light", theme === "light");
+      const btn = document.getElementById("admin-theme-toggle");
+      if (btn) btn.textContent = theme === "dark" ? "☀️" : "🌙";
+    }
+    (function initTheme() {
+      const saved = localStorage.getItem(THEME_KEY);
+      const theme = (saved === "light" || saved === "dark") ? saved : "dark";
+      applyAdminTheme(theme);
     })();
+    document.getElementById("admin-theme-toggle").addEventListener("click", () => {
+      const isDark = document.body.classList.contains("theme-dark");
+      const next = isDark ? "light" : "dark";
+      localStorage.setItem(THEME_KEY, next);
+      applyAdminTheme(next);
+    });
   </script>
 </body>
 </html>

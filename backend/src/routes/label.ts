@@ -10,6 +10,7 @@ export function registerLabelRoute(router: Router): void {
       const format = _req.query.format as string | undefined;
       if (format === "csv") {
         res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader("Content-Disposition", "attachment; filename=\"user_labels.csv\"");
         const header = "formula,Curie_TC_K,synagonia,source,comment,created_at,client_ip\n";
         const rows = labels.map(
           (r) =>
