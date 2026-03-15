@@ -9,14 +9,14 @@ exports.toAuthUser = toAuthUser;
 exports.register = register;
 exports.login = login;
 exports.getAuthUserById = getAuthUserById;
-const bcrypt_1 = __importDefault(require("bcrypt"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const userStorage_1 = require("../db/userStorage");
 const SALT_ROUNDS = 10;
 function hashPassword(plain) {
-    return bcrypt_1.default.hash(plain, SALT_ROUNDS);
+    return bcryptjs_1.default.hash(plain, SALT_ROUNDS);
 }
 function checkPassword(plain, hash) {
-    return bcrypt_1.default.compare(plain, hash);
+    return bcryptjs_1.default.compare(plain, hash);
 }
 function toAuthUser(record) {
     return {
