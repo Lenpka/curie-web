@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.findUserByEmail = findUserByEmail;
 exports.findUserById = findUserById;
 exports.createUser = createUser;
+exports.ensureFirstUserIsAdmin = ensureFirstUserIsAdmin;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const DATA_DIR = process.env.DATA_DIR || path_1.default.join(process.cwd(), "data");
@@ -74,4 +75,24 @@ email, passwordHash, role) {
     users.push(newUser);
     saveUsers(users);
     return newUser;
+}
+/** При старте: один пользователь → admin; все из ADMIN_EMAILS → admin. */
+function ensureFirstUserIsAdmin(adminEmails = []) {
+    const users = loadUsers();
+    if (users.length === 0)
+        return;
+    let changed = false;
+    if (users.length === 1 && users[0].role !== "admin") {
+        users[0].role = "admin";
+        changed = true;
+    }
+    const list = adminEmails.map((e) => e.trim().toLowerCase()).filter(Boolean);
+    for (const u of users) {
+        if (list.includes(u.email) && u.role !== "admin") {
+            u.role = "admin";
+            changed = true;
+        }
+    }
+    if (changed)
+        saveUsers(users);
 }

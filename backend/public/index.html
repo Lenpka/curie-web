@@ -459,6 +459,31 @@
       <div class="error" id="label-error"></div>
     </div>
 
+    <!-- Классификация: формула + тип магнетизма -->
+    <div class="card">
+      <h2 id="classify-card-title">Классификация по типу магнетизма</h2>
+      <div class="form-group">
+        <label id="classify-formula-label" for="classify-formula">Формула *</label>
+        <input id="classify-formula" type="text" placeholder="Fe3O4, Nd2Fe14B" />
+      </div>
+      <div class="form-group">
+        <label id="classify-class-label" for="classify-class">Тип магнетизма *</label>
+        <select id="classify-class">
+          <option value="">— выберите —</option>
+          <option value="ferromagnet">Ферромагнетик</option>
+          <option value="antiferromagnet">Антиферромагнетик</option>
+          <option value="ferrimagnet">Ферримагнетик</option>
+          <option value="diamagnet">Диамагнетик</option>
+          <option value="paramagnet">Парамагнетик</option>
+        </select>
+      </div>
+      <div class="actions">
+        <button class="primary" id="btn-classify">Отправить классификацию</button>
+        <div class="status" id="classify-status"></div>
+      </div>
+      <div class="error" id="classify-error"></div>
+    </div>
+
   </div>
 
   <!-- APP LOGIC: переводы, работа с DOM и запросы к backend -->

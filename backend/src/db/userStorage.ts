@@ -89,5 +89,24 @@ export function createUser ( //Емайл, пароль и доступ на в�
   users.push(newUser);
   saveUsers(users);
   return newUser;
- }
+}
+
+/** При старте: один пользователь → admin; все из ADMIN_EMAILS → admin. */
+export function ensureFirstUserIsAdmin(adminEmails: string[] = []): void {
+  const users = loadUsers();
+  if (users.length === 0) return;
+  let changed = false;
+  if (users.length === 1 && users[0].role !== "admin") {
+    users[0].role = "admin";
+    changed = true;
+  }
+  const list = adminEmails.map((e) => e.trim().toLowerCase()).filter(Boolean);
+  for (const u of users) {
+    if (list.includes(u.email) && u.role !== "admin") {
+      u.role = "admin";
+      changed = true;
+    }
+  }
+  if (changed) saveUsers(users);
+}
  

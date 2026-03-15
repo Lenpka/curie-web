@@ -7,11 +7,15 @@ VCNode.js-бэкенд, который:
 - POST /api/predict — предсказание T_C по списку формул;
 - POST /api/label   — сохранение пользовательской разметки (формула + T_C + признаки);
 - GET  /api/labels  — выгрузка разметки **только для администратора** (JSON или `?format=csv`).
+- POST /api/classify — сохранение классификации: формула + тип магнетизма (ферро/антиферро/ферри/диа/парамагнетик);
+- GET  /api/classifications — выгрузка классификаций для админа (JSON или `?format=csv`).
 
 Авторизация и админка:
 - POST /api/auth/register, POST /api/auth/login, POST /api/auth/logout, GET /api/auth/me;
 - первый зарегистрированный пользователь получает роль admin;
 - страница **/admin.html** — просмотр и выгрузка собранных данных (доступна только админу).
+
+Переменная **ADMIN_EMAILS** (необязательно): список email через запятую; при старте этим пользователям выставляется роль admin. Пример: `ADMIN_EMAILS=you@example.com`.
 
 Подробнее: [docs/AUTH_AND_ADMIN.md](docs/AUTH_AND_ADMIN.md).
 

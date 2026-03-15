@@ -6,11 +6,15 @@ import cookieParser from "cookie-parser";
 import session from "express-session";
 
 import { config } from "./config";
+import { ensureFirstUserIsAdmin } from "./db/userStorage";
 import { apiRateLimiter } from "./middleware/rateLimit";
 import { errorHandler } from "./middleware/errorHandler";
 import { registerPredictRoute } from "./routes/predict";
 import { registerLabelRoute } from "./routes/label";
+import { registerClassifyRoute } from "./routes/classify";
 import { registerAuthRoutes } from "./routes/auth";
+
+ensureFirstUserIsAdmin(config.adminEmails);
 
 const app = express();
 
@@ -45,6 +49,7 @@ const apiRouter = express.Router();
 registerAuthRoutes(apiRouter);
 registerPredictRoute(apiRouter);
 registerLabelRoute(apiRouter);
+registerClassifyRoute(apiRouter);
 app.use("/api", apiRouter);
 
 app.use(errorHandler);

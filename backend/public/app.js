@@ -54,7 +54,24 @@ const translations = {
     labelStatusIdle: "",
     labelStatusSuccess: "Разметка отправлена.",
     labelErrorRequired: "Укажите хотя бы формулу и температуру.",
-    labelErrorRequest: "Не удалось сохранить разметку."
+    labelErrorRequest: "Не удалось сохранить разметку.",
+
+    // CLASSIFY FORM (RU)
+    classifyCardTitle: "Классификация по типу магнетизма",
+    classifyFormulaLabel: "Формула *",
+    classifyClassLabel: "Тип магнетизма *",
+    classifyPlaceholder: "— выберите —",
+    classifyOptions: {
+      ferromagnet: "Ферромагнетик",
+      antiferromagnet: "Антиферромагнетик",
+      ferrimagnet: "Ферримагнетик",
+      diamagnet: "Диамагнетик",
+      paramagnet: "Парамагнетик"
+    },
+    btnClassify: "Отправить классификацию",
+    classifyStatusSuccess: "Классификация отправлена.",
+    classifyErrorRequired: "Укажите формулу и тип магнетизма.",
+    classifyErrorRequest: "Не удалось сохранить классификацию."
   },
   en: {
     title: "Curie temperature prediction",
@@ -103,7 +120,24 @@ const translations = {
     labelStatusIdle: "",
     labelStatusSuccess: "Annotation submitted.",
     labelErrorRequired: "Please provide at least formula and temperature.",
-    labelErrorRequest: "Failed to save annotation."
+    labelErrorRequest: "Failed to save annotation.",
+
+    // CLASSIFY FORM (EN)
+    classifyCardTitle: "Classification by magnetic type",
+    classifyFormulaLabel: "Formula *",
+    classifyClassLabel: "Magnetic type *",
+    classifyPlaceholder: "— select —",
+    classifyOptions: {
+      ferromagnet: "Ferromagnet",
+      antiferromagnet: "Antiferromagnet",
+      ferrimagnet: "Ferrimagnet",
+      diamagnet: "Diamagnet",
+      paramagnet: "Paramagnet"
+    },
+    btnClassify: "Submit classification",
+    classifyStatusSuccess: "Classification submitted.",
+    classifyErrorRequired: "Please provide formula and magnetic type.",
+    classifyErrorRequest: "Failed to save classification."
   }
 };
 
@@ -167,7 +201,17 @@ const els = {
   registerEmail: document.getElementById("register-email"),
   registerPassword: document.getElementById("register-password"),
   authErrorRegister: document.getElementById("auth-error-register"),
-  btnRegister: document.getElementById("btn-register")
+  btnRegister: document.getElementById("btn-register"),
+
+  // Classify form
+  classifyCardTitle: document.getElementById("classify-card-title"),
+  classifyFormulaLabel: document.getElementById("classify-formula-label"),
+  classifyFormulaInput: document.getElementById("classify-formula"),
+  classifyClassLabel: document.getElementById("classify-class-label"),
+  classifyClassSelect: document.getElementById("classify-class"),
+  classifyStatus: document.getElementById("classify-status"),
+  classifyError: document.getElementById("classify-error"),
+  btnClassify: document.getElementById("btn-classify")
 };
 
 const fetchOpts = { credentials: "include" };
@@ -257,6 +301,22 @@ function applyTranslations() {
       opts[i].textContent = t.synOptions[i];
     }
   }
+
+  // classify form
+  if (els.classifyCardTitle) els.classifyCardTitle.textContent = t.classifyCardTitle;
+  if (els.classifyFormulaLabel) els.classifyFormulaLabel.textContent = t.classifyFormulaLabel;
+  if (els.classifyClassLabel) els.classifyClassLabel.textContent = t.classifyClassLabel;
+  if (els.classifyClassSelect && t.classifyOptions) {
+    const opts = els.classifyClassSelect.options;
+    if (opts[0]) opts[0].textContent = t.classifyPlaceholder || "—";
+    const vals = ["ferromagnet", "antiferromagnet", "ferrimagnet", "diamagnet", "paramagnet"];
+    for (let i = 0; i < vals.length && opts[i + 1]; i++) {
+      opts[i + 1].textContent = t.classifyOptions[vals[i]] || vals[i];
+    }
+  }
+  if (els.btnClassify) els.btnClassify.textContent = t.btnClassify;
+  if (els.classifyStatus) els.classifyStatus.textContent = "";
+  if (els.classifyError) els.classifyError.textContent = "";
 }
 // Смена темы: dark = theme-dark, light = theme-light
 function applyTheme(theme) {
@@ -523,6 +583,48 @@ if (els.labelButton) {
       if (els.labelError) els.labelError.textContent = t.labelErrorRequest;
     } finally {
       els.labelButton.disabled = false;
+    }
+  });
+}
+
+// Классификация: POST /api/classify
+if (els.btnClassify) {
+  els.btnClassify.addEventListener("click", async () => {
+    const t = translations[currentLang];
+    if (els.classifyStatus) els.classifyStatus.textContent = "";
+    if (els.classifyError) els.classifyError.textContent = "";
+
+    const formula = els.classifyFormulaInput?.value?.trim() ?? "";
+    const magneticClass = els.classifyClassSelect?.value?.trim() ?? "";
+
+    if (!formula || !magneticClass) {
+      if (els.classifyError) els.classifyError.textContent = t.classifyErrorRequired;
+      return;
+    }
+
+    els.btnClassify.disabled = true;
+    if (els.classifyStatus) els.classifyStatus.textContent = t.statusLoading;
+
+    try {
+      const res = await fetch("/api/classify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ formula, magneticClass })
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.status === "ok") {
+        if (els.classifyStatus) els.classifyStatus.textContent = t.classifyStatusSuccess;
+        if (els.classifyFormulaInput) els.classifyFormulaInput.value = "";
+        if (els.classifyClassSelect) els.classifyClassSelect.selectedIndex = 0;
+      } else {
+        if (els.classifyError) els.classifyError.textContent = data.error || t.classifyErrorRequest;
+      }
+    } catch (e) {
+      console.error(e);
+      if (els.classifyError) els.classifyError.textContent = t.classifyErrorRequest;
+    } finally {
+      els.btnClassify.disabled = false;
     }
   });
 }

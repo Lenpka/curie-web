@@ -52,14 +52,24 @@
 </head>
 <body>
   <div class="container">
-    <h1>Собранные данные разметки</h1>
+    <h1>Собранные данные</h1>
     <div class="toolbar">
       <a href="/">← На главную</a>
       <button type="button" id="btn-refresh">Обновить</button>
-      <button type="button" id="btn-download-csv">Скачать CSV</button>
     </div>
     <div id="message"></div>
-    <div id="table-wrap"></div>
+
+    <h2 style="margin-top: 32px;">Разметка (T<sub>C</sub>, сингония)</h2>
+    <div class="toolbar">
+      <button type="button" id="btn-download-labels-csv">Скачать CSV</button>
+    </div>
+    <div id="labels-table-wrap"></div>
+
+    <h2 style="margin-top: 32px;">Классификации (тип магнетизма)</h2>
+    <div class="toolbar">
+      <button type="button" id="btn-download-classify-csv">Скачать CSV</button>
+    </div>
+    <div id="classify-table-wrap"></div>
   </div>
   <script>
     const fetchOpts = { credentials: "include" };
@@ -71,25 +81,30 @@
       el.style.display = "block";
     }
 
-    function renderTable(labels) {
-      const wrap = document.getElementById("table-wrap");
+    function renderLabelsTable(labels) {
+      const wrap = document.getElementById("labels-table-wrap");
       if (!labels || labels.length === 0) {
         wrap.innerHTML = "<p class=\"msg info\">Записей пока нет.</p>";
         return;
       }
       let html = "<table><thead><tr><th>Формула</th><th>T<sub>C</sub> (K)</th><th>Сингония</th><th>Источник</th><th>Комментарий</th><th>Дата</th></tr></thead><tbody>";
       labels.forEach((r) => {
-        html += "<tr>";
-        html += "<td>" + escapeHtml(r.formula) + "</td>";
-        html += "<td>" + (r.curieTcK != null ? Number(r.curieTcK).toFixed(2) : "") + "</td>";
-        html += "<td>" + escapeHtml(r.synagonia || "") + "</td>";
-        html += "<td>" + escapeHtml(r.source || "") + "</td>";
-        html += "<td>" + escapeHtml(r.comment || "") + "</td>";
-        html += "<td>" + escapeHtml(r.createdAt || "") + "</td>";
-        html += "</tr>";
+        html += "<tr><td>" + escapeHtml(r.formula) + "</td><td>" + (r.curieTcK != null ? Number(r.curieTcK).toFixed(2) : "") + "</td><td>" + escapeHtml(r.synagonia || "") + "</td><td>" + escapeHtml(r.source || "") + "</td><td>" + escapeHtml(r.comment || "") + "</td><td>" + escapeHtml(r.createdAt || "") + "</td></tr>";
       });
-      html += "</tbody></table>";
-      wrap.innerHTML = html;
+      wrap.innerHTML = html + "</tbody></table>";
+    }
+
+    function renderClassifyTable(list) {
+      const wrap = document.getElementById("classify-table-wrap");
+      if (!list || list.length === 0) {
+        wrap.innerHTML = "<p class=\"msg info\">Записей пока нет.</p>";
+        return;
+      }
+      let html = "<table><thead><tr><th>Формула</th><th>Тип магнетизма</th><th>Дата</th></tr></thead><tbody>";
+      list.forEach((r) => {
+        html += "<tr><td>" + escapeHtml(r.formula) + "</td><td>" + escapeHtml(r.magneticClass || "") + "</td><td>" + escapeHtml(r.createdAt || "") + "</td></tr>";
+      });
+      wrap.innerHTML = html + "</tbody></table>";
     }
 
     function escapeHtml(s) {
@@ -98,48 +113,67 @@
       return div.innerHTML;
     }
 
-    async function loadLabels() {
+    async function loadData() {
       const msgEl = document.getElementById("message");
       msgEl.style.display = "none";
       try {
-        const res = await fetch("/api/labels", fetchOpts);
-        const data = await res.json().catch(() => ({}));
-        if (res.status === 401 || res.status === 403) {
+        const [labelsRes, classRes] = await Promise.all([
+          fetch("/api/labels", fetchOpts),
+          fetch("/api/classifications", fetchOpts)
+        ]);
+        if (labelsRes.status === 401 || labelsRes.status === 403) {
           showMsg("Войдите под учётной записью администратора.", "error");
-          document.getElementById("table-wrap").innerHTML = "<p><a href=\"/\">Перейти на главную</a> и войти.</p>";
+          document.getElementById("labels-table-wrap").innerHTML = "<p><a href=\"/\">Перейти на главную</a> и войти.</p>";
+          document.getElementById("classify-table-wrap").innerHTML = "";
           return;
         }
-        if (!res.ok) {
-          showMsg(data.error || "Ошибка загрузки", "error");
+        if (!labelsRes.ok) {
+          showMsg("Ошибка загрузки разметки.", "error");
           return;
         }
-        renderTable(data.labels || []);
+        const labelsData = await labelsRes.json().catch(() => ({}));
+        renderLabelsTable(labelsData.labels || []);
+
+        if (!classRes.ok) {
+          document.getElementById("classify-table-wrap").innerHTML = "<p class=\"msg info\">Не удалось загрузить классификации.</p>";
+        } else {
+          const classData = await classRes.json().catch(() => ({}));
+          renderClassifyTable(classData.classifications || []);
+        }
       } catch (e) {
         showMsg("Ошибка сети.", "error");
       }
     }
 
-    document.getElementById("btn-refresh").addEventListener("click", loadLabels);
+    document.getElementById("btn-refresh").addEventListener("click", loadData);
 
-    document.getElementById("btn-download-csv").addEventListener("click", async () => {
+    document.getElementById("btn-download-labels-csv").addEventListener("click", async () => {
       try {
         const res = await fetch("/api/labels?format=csv", fetchOpts);
-        if (res.status === 401 || res.status === 403) {
-          showMsg("Доступ только для администратора.", "error");
-          return;
-        }
+        if (res.status === 401 || res.status === 403) { showMsg("Доступ только для администратора.", "error"); return; }
         const blob = await res.blob();
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download = "user_labels.csv";
         a.click();
         URL.revokeObjectURL(a.href);
-      } catch (e) {
-        showMsg("Ошибка скачивания.", "error");
-      }
+      } catch (e) { showMsg("Ошибка скачивания.", "error"); }
     });
 
-    loadLabels();
+    document.getElementById("btn-download-classify-csv").addEventListener("click", async () => {
+      try {
+        const res = await fetch("/api/classifications?format=csv", fetchOpts);
+        if (res.status === 401 || res.status === 403) { showMsg("Доступ только для администратора.", "error"); return; }
+        const blob = await res.blob();
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "user_classifications.csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      } catch (e) { showMsg("Ошибка скачивания.", "error"); }
+    });
+
+    loadData();
   </script>
 </body>
 </html>

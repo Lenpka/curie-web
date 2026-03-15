@@ -6,6 +6,11 @@ export const config = {
     max: 100
   },
   bodyLimit: "100kb",
-  sessionSecret: process.env.SESSION_SECRET || "change-me-in-production"
+  sessionSecret: process.env.SESSION_SECRET || "change-me-in-production",
+  /** Список email, которым при старте выставляется роль admin (переменная ADMIN_EMAILS, через запятую). */
+  adminEmails: (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
 };
 

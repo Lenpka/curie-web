@@ -10,11 +10,14 @@ const helmet_1 = __importDefault(require("helmet"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const express_session_1 = __importDefault(require("express-session"));
 const config_1 = require("./config");
+const userStorage_1 = require("./db/userStorage");
 const rateLimit_1 = require("./middleware/rateLimit");
 const errorHandler_1 = require("./middleware/errorHandler");
 const predict_1 = require("./routes/predict");
 const label_1 = require("./routes/label");
+const classify_1 = require("./routes/classify");
 const auth_1 = require("./routes/auth");
+(0, userStorage_1.ensureFirstUserIsAdmin)(config_1.config.adminEmails);
 const app = (0, express_1.default)();
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
@@ -41,6 +44,7 @@ const apiRouter = express_1.default.Router();
 (0, auth_1.registerAuthRoutes)(apiRouter);
 (0, predict_1.registerPredictRoute)(apiRouter);
 (0, label_1.registerLabelRoute)(apiRouter);
+(0, classify_1.registerClassifyRoute)(apiRouter);
 app.use("/api", apiRouter);
 app.use(errorHandler_1.errorHandler);
 app.listen(config_1.config.port, () => {
