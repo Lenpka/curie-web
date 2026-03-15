@@ -101,6 +101,35 @@
       border-color: var(--accent);
       color: #fff;
     }
+    .auth-buttons, .user-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .user-email { font-size: 0.9rem; color: var(--text-muted); }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-ghost:hover { background: var(--bg-card); border-color: var(--border-focus); }
+    .auth-card .auth-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .auth-card .auth-tab {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .auth-card .auth-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .auth-form label { display: block; margin-top: 12px; margin-bottom: 4px; }
+    .auth-form label:first-of-type { margin-top: 0; }
+    .auth-form input { margin-bottom: 4px; }
+    .auth-form .auth-error { color: var(--error); font-size: 0.9rem; margin-top: 8px; }
+    .auth-form button.primary { margin-top: 16px; }
     .card {
       background: var(--bg-card);
       border-radius: var(--radius-lg);
@@ -282,18 +311,46 @@
       </div>
 
       <div class="header-controls">
-
+        <div id="auth-buttons" class="auth-buttons">
+          <button type="button" id="btn-show-login" class="btn-ghost">Войти</button>
+          <button type="button" id="btn-show-register" class="btn-ghost">Регистрация</button>
+        </div>
+        <div id="user-info" class="user-info" style="display:none;">
+          <span id="user-email" class="user-email"></span>
+          <a id="link-admin" href="/admin.html" class="btn-ghost" style="display:none;">Админка</a>
+          <button type="button" id="btn-logout" class="btn-ghost">Выйти</button>
+        </div>
         <div class="lang-toggle">
           <button data-lang="ru" class="active">RU</button>
           <button data-lang="en">EN</button>
         </div>
-
-        
-        <button id = "theme-toggle" class="theme-toggle" title="Сменить тему">
-          🌙
-        </button>
-    </div>
+        <button id="theme-toggle" class="theme-toggle" title="Сменить тему">🌙</button>
+      </div>
     </header>
+
+    <!-- Блок входа / регистрации (скрыт по умолчанию) -->
+    <div id="auth-card" class="card auth-card" style="display:none;">
+      <div class="auth-tabs">
+        <button type="button" id="auth-tab-login" class="auth-tab active">Вход</button>
+        <button type="button" id="auth-tab-register" class="auth-tab">Регистрация</button>
+      </div>
+      <div id="auth-form-login" class="auth-form">
+        <label for="login-email">Email</label>
+        <input id="login-email" type="email" placeholder="you@example.com" autocomplete="email" />
+        <label for="login-password">Пароль</label>
+        <input id="login-password" type="password" autocomplete="current-password" />
+        <div class="auth-error" id="auth-error-login"></div>
+        <button type="button" id="btn-login" class="primary">Войти</button>
+      </div>
+      <div id="auth-form-register" class="auth-form" style="display:none;">
+        <label for="register-email">Email</label>
+        <input id="register-email" type="email" placeholder="you@example.com" autocomplete="email" />
+        <label for="register-password">Пароль (не менее 6 символов)</label>
+        <input id="register-password" type="password" autocomplete="new-password" />
+        <div class="auth-error" id="auth-error-register"></div>
+        <button type="button" id="btn-register" class="primary">Зарегистрироваться</button>
+      </div>
+    </div>
 
 
 

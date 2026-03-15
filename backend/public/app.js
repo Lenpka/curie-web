@@ -145,9 +145,64 @@ const els = {
   labelError: document.getElementById("label-error"),
   labelButton: document.getElementById("btn-label"),
 
-  // Цвет кнопки
-  themeToggle: document.getElementById("theme-toggle")
+  themeToggle: document.getElementById("theme-toggle"),
+
+  // Auth
+  authButtons: document.getElementById("auth-buttons"),
+  userInfo: document.getElementById("user-info"),
+  userEmail: document.getElementById("user-email"),
+  linkAdmin: document.getElementById("link-admin"),
+  btnLogout: document.getElementById("btn-logout"),
+  btnShowLogin: document.getElementById("btn-show-login"),
+  btnShowRegister: document.getElementById("btn-show-register"),
+  authCard: document.getElementById("auth-card"),
+  authTabLogin: document.getElementById("auth-tab-login"),
+  authTabRegister: document.getElementById("auth-tab-register"),
+  authFormLogin: document.getElementById("auth-form-login"),
+  authFormRegister: document.getElementById("auth-form-register"),
+  loginEmail: document.getElementById("login-email"),
+  loginPassword: document.getElementById("login-password"),
+  authErrorLogin: document.getElementById("auth-error-login"),
+  btnLogin: document.getElementById("btn-login"),
+  registerEmail: document.getElementById("register-email"),
+  registerPassword: document.getElementById("register-password"),
+  authErrorRegister: document.getElementById("auth-error-register"),
+  btnRegister: document.getElementById("btn-register")
 };
+
+const fetchOpts = { credentials: "include" };
+
+function updateAuthUI(user) {
+  if (els.authButtons) els.authButtons.style.display = user ? "none" : "flex";
+  if (els.userInfo) els.userInfo.style.display = user ? "flex" : "none";
+  if (user && els.userEmail) els.userEmail.textContent = user.email;
+  if (els.linkAdmin) els.linkAdmin.style.display = user && user.role === "admin" ? "inline-block" : "none";
+}
+
+async function loadAuth() {
+  try {
+    const res = await fetch("/api/auth/me", fetchOpts);
+    const data = await res.json().catch(() => ({}));
+    const user = res.ok && data.user ? data.user : null;
+    updateAuthUI(user);
+    return user;
+  } catch (e) {
+    updateAuthUI(null);
+    return null;
+  }
+}
+
+function showAuthCard(mode) {
+  if (!els.authCard) return;
+  els.authCard.style.display = "block";
+  const isLogin = mode === "login";
+  if (els.authFormLogin) els.authFormLogin.style.display = isLogin ? "block" : "none";
+  if (els.authFormRegister) els.authFormRegister.style.display = isLogin ? "none" : "block";
+  if (els.authTabLogin) els.authTabLogin.classList.toggle("active", isLogin);
+  if (els.authTabRegister) els.authTabRegister.classList.toggle("active", !isLogin);
+  if (els.authErrorLogin) els.authErrorLogin.textContent = "";
+  if (els.authErrorRegister) els.authErrorRegister.textContent = "";
+}
 
 function applyTranslations() {
   const t = translations[currentLang];
@@ -243,6 +298,87 @@ if (els.themeToggle) {
     window.localStorage.setItem(THEME_KEY, next);
   });
 }
+
+(function initAuth() {
+  loadAuth();
+  if (els.btnShowLogin) els.btnShowLogin.addEventListener("click", () => showAuthCard("login"));
+  if (els.btnShowRegister) els.btnShowRegister.addEventListener("click", () => showAuthCard("register"));
+  if (els.authTabLogin) els.authTabLogin.addEventListener("click", () => showAuthCard("login"));
+  if (els.authTabRegister) els.authTabRegister.addEventListener("click", () => showAuthCard("register"));
+  if (els.btnLogin) {
+    els.btnLogin.addEventListener("click", async () => {
+      const email = els.loginEmail?.value?.trim() ?? "";
+      const password = els.loginPassword?.value ?? "";
+      if (els.authErrorLogin) els.authErrorLogin.textContent = "";
+      if (!email || !password) {
+        if (els.authErrorLogin) els.authErrorLogin.textContent = "Введите email и пароль.";
+        return;
+      }
+      els.btnLogin.disabled = true;
+      try {
+        const res = await fetch("/api/auth/login", {
+          ...fetchOpts,
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          els.authCard.style.display = "none";
+          updateAuthUI(data.user);
+        } else {
+          if (els.authErrorLogin) els.authErrorLogin.textContent = data.error || "Ошибка входа.";
+        }
+      } catch (e) {
+        if (els.authErrorLogin) els.authErrorLogin.textContent = "Ошибка сети.";
+      } finally {
+        els.btnLogin.disabled = false;
+      }
+    });
+  }
+  if (els.btnRegister) {
+    els.btnRegister.addEventListener("click", async () => {
+      const email = els.registerEmail?.value?.trim() ?? "";
+      const password = els.registerPassword?.value ?? "";
+      if (els.authErrorRegister) els.authErrorRegister.textContent = "";
+      if (!email || !password) {
+        if (els.authErrorRegister) els.authErrorRegister.textContent = "Введите email и пароль.";
+        return;
+      }
+      if (password.length < 6) {
+        if (els.authErrorRegister) els.authErrorRegister.textContent = "Пароль не менее 6 символов.";
+        return;
+      }
+      els.btnRegister.disabled = true;
+      try {
+        const res = await fetch("/api/auth/register", {
+          ...fetchOpts,
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          els.authCard.style.display = "none";
+          updateAuthUI(data.user);
+        } else {
+          if (els.authErrorRegister) els.authErrorRegister.textContent = data.error || "Ошибка регистрации.";
+        }
+      } catch (e) {
+        if (els.authErrorRegister) els.authErrorRegister.textContent = "Ошибка сети.";
+      } finally {
+        els.btnRegister.disabled = false;
+      }
+    });
+  }
+  if (els.btnLogout) {
+    els.btnLogout.addEventListener("click", async () => {
+      await fetch("/api/auth/logout", { ...fetchOpts, method: "POST" });
+      updateAuthUI(null);
+    });
+  }
+})();
+
 if (els.btnPredict) {
   els.btnPredict.addEventListener("click", async () => {
     const t = translations[currentLang];

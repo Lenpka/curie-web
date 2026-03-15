@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Админка — разметка</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Outfit", system-ui, sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .container { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin-bottom: 8px; }
+    a { color: #38bdf8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .msg { padding: 16px; border-radius: 12px; margin: 16px 0; }
+    .msg.error { background: rgba(248,113,113,0.2); color: #f87171; }
+    .msg.info { background: #1e293b; color: #94a3b8; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 0.9rem;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #334155; }
+    th { background: #1e293b; font-weight: 600; }
+    tr:last-child td { border-bottom: none; }
+    .toolbar { display: flex; align-items: center; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+    .toolbar a, .toolbar button {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #f1f5f9;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+    .toolbar a:hover, .toolbar button:hover { border-color: #38bdf8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Собранные данные разметки</h1>
+    <div class="toolbar">
+      <a href="/">← На главную</a>
+      <button type="button" id="btn-refresh">Обновить</button>
+      <button type="button" id="btn-download-csv">Скачать CSV</button>
+    </div>
+    <div id="message"></div>
+    <div id="table-wrap"></div>
+  </div>
+  <script>
+    const fetchOpts = { credentials: "include" };
+
+    function showMsg(text, type) {
+      const el = document.getElementById("message");
+      el.className = "msg " + (type || "info");
+      el.textContent = text;
+      el.style.display = "block";
+    }
+
+    function renderTable(labels) {
+      const wrap = document.getElementById("table-wrap");
+      if (!labels || labels.length === 0) {
+        wrap.innerHTML = "<p class=\"msg info\">Записей пока нет.</p>";
+        return;
+      }
+      let html = "<table><thead><tr><th>Формула</th><th>T<sub>C</sub> (K)</th><th>Сингония</th><th>Источник</th><th>Комментарий</th><th>Дата</th></tr></thead><tbody>";
+      labels.forEach((r) => {
+        html += "<tr>";
+        html += "<td>" + escapeHtml(r.formula) + "</td>";
+        html += "<td>" + (r.curieTcK != null ? Number(r.curieTcK).toFixed(2) : "") + "</td>";
+        html += "<td>" + escapeHtml(r.synagonia || "") + "</td>";
+        html += "<td>" + escapeHtml(r.source || "") + "</td>";
+        html += "<td>" + escapeHtml(r.comment || "") + "</td>";
+        html += "<td>" + escapeHtml(r.createdAt || "") + "</td>";
+        html += "</tr>";
+      });
+      html += "</tbody></table>";
+      wrap.innerHTML = html;
+    }
+
+    function escapeHtml(s) {
+      const div = document.createElement("div");
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    async function loadLabels() {
+      const msgEl = document.getElementById("message");
+      msgEl.style.display = "none";
+      try {
+        const res = await fetch("/api/labels", fetchOpts);
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401 || res.status === 403) {
+          showMsg("Войдите под учётной записью администратора.", "error");
+          document.getElementById("table-wrap").innerHTML = "<p><a href=\"/\">Перейти на главную</a> и войти.</p>";
+          return;
+        }
+        if (!res.ok) {
+          showMsg(data.error || "Ошибка загрузки", "error");
+          return;
+        }
+        renderTable(data.labels || []);
+      } catch (e) {
+        showMsg("Ошибка сети.", "error");
+      }
+    }
+
+    document.getElementById("btn-refresh").addEventListener("click", loadLabels);
+
+    document.getElementById("btn-download-csv").addEventListener("click", async () => {
+      try {
+        const res = await fetch("/api/labels?format=csv", fetchOpts);
+        if (res.status === 401 || res.status === 403) {
+          showMsg("Доступ только для администратора.", "error");
+          return;
+        }
+        const blob = await res.blob();
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "user_labels.csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      } catch (e) {
+        showMsg("Ошибка скачивания.", "error");
+      }
+    });
+
+    loadLabels();
+  </script>
+</body>
+</html>

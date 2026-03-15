@@ -39,3 +39,49 @@ export function appendUserLabel(record: UserLabelRecord): void {
   }
 }
 
+export function readUserLabels(): UserLabelRecord[] {
+  if (!fs.existsSync(LABELS_CSV)) {
+    return [];
+  }
+  const raw = fs.readFileSync(LABELS_CSV, "utf8");
+  const lines = raw.trim().split("\n");
+  if (lines.length < 2) return [];
+  const records: UserLabelRecord[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = parseCsvLine(lines[i]);
+    if (parts.length >= 5) {
+      records.push({
+        formula: parts[0],
+        curieTcK: Number(parts[1]) || 0,
+        synagonia: parts[2] || undefined,
+        source: parts[3] || undefined,
+        comment: parts[4] || undefined,
+        createdAt: parts[5] ?? "",
+        clientIp: parts[6] || undefined
+      });
+    }
+  }
+  return records;
+}
+
+function parseCsvLine(line: string): string[] {
+  const out: string[] = [];
+  let cur = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      inQuotes = !inQuotes;
+    } else if (inQuotes) {
+      cur += c;
+    } else if (c === ",") {
+      out.push(cur);
+      cur = "";
+    } else {
+      cur += c;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+

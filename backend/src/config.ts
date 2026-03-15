@@ -5,6 +5,7 @@ export const config = {
     windowMs: 15 * 60 * 1000,
     max: 100
   },
-  bodyLimit: "100kb"
+  bodyLimit: "100kb",
+  sessionSecret: process.env.SESSION_SECRET || "change-me-in-production"
 };
 
