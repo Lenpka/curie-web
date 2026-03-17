@@ -11,6 +11,7 @@ function registerLabelRoute(router) {
             const format = _req.query.format;
             if (format === "csv") {
                 res.setHeader("Content-Type", "text/csv; charset=utf-8");
+                res.setHeader("Content-Disposition", "attachment; filename=\"user_labels.csv\"");
                 const header = "formula,Curie_TC_K,synagonia,source,comment,created_at,client_ip\n";
                 const rows = labels.map((r) => [r.formula, r.curieTcK.toFixed(2), r.synagonia ?? "", r.source ?? "", (r.comment ?? "").replace(/\n/g, " "), r.createdAt, r.clientIp ?? ""].join(","));
                 return res.send(header + rows.join("\n"));

@@ -329,9 +329,10 @@ function applyTheme(theme) {
 }
 
 (function initTheme() {
-  const saved = window.localStorage.getItem(THEME_KEY);
-  const initial = saved === "dark" ||saved === "light" ? saved : "dark";
-  applyTheme(initial);
+  let saved = window.localStorage.getItem(THEME_KEY);
+  if (saved !== "dark" && saved !== "light") saved = "dark";
+  window.localStorage.setItem(THEME_KEY, saved);
+  applyTheme(saved);
 })();
 
 document

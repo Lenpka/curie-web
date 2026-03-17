@@ -1,98 +1,98 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.findUserByEmail = findUserByEmail;
 exports.findUserById = findUserById;
 exports.createUser = createUser;
 exports.ensureFirstUserIsAdmin = ensureFirstUserIsAdmin;
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
-const DATA_DIR = process.env.DATA_DIR || path_1.default.join(process.cwd(), "data");
-const USERS_FILE = path_1.default.join(DATA_DIR, "users.json");
-// Убедится в наличии директории с данными иначе - создать
-function ensureDataDir() {
-    if (!fs_1.default.existsSync(DATA_DIR)) {
-        fs_1.default.mkdirSync(DATA_DIR, { recursive: true });
-    }
-}
-//Загрузить данные
-function loadUsers() {
-    ensureDataDir(); // Рекурсивно берем данные
-    if (!fs_1.default.existsSync(USERS_FILE)) {
-        return [];
-    }
-    const row = fs_1.default.readFileSync(USERS_FILE, "utf-8");
-    try {
-        const data = JSON.parse(row);
-        return Array.isArray(data.users) ? data.users : [];
-    }
-    catch {
-        return [];
-    }
-}
-// Сохранение пользователей
-function saveUsers(users) {
-    ensureDataDir();
-    fs_1.default.writeFileSync(USERS_FILE, JSON.stringify({ users }, null, 2), "utf8");
-}
-// Переход ко следующему
-function nextId(users) {
-    const max = users.reduce((m, u) => {
-        const n = parseInt(u.id, 10);
-        return Number.isFinite(n) && n > m ? n : m;
-    }, 0);
-    return String(max + 1);
-}
+const sqlite_1 = require("./sqlite");
 // Емэйл
 function findUserByEmail(email) {
-    const users = loadUsers();
+    const db = (0, sqlite_1.getDb)();
     const norm = email.trim().toLowerCase();
-    return users.find((u) => u.email.toLowerCase() === norm) ?? null;
+    const row = db
+        .prepare("SELECT id, email, password_hash, role, created_at FROM users WHERE LOWER(email) = ?")
+        .get(norm.toLowerCase());
+    if (!row)
+        return null;
+    return {
+        id: String(row.id),
+        email: row.email,
+        passwordHash: row.password_hash,
+        role: row.role,
+        createdAt: row.created_at
+    };
 }
 // Id
 function findUserById(id) {
-    const users = loadUsers();
-    return users.find((u) => u.id === id) ?? null;
+    const db = (0, sqlite_1.getDb)();
+    const row = db
+        .prepare("SELECT id, email, password_hash, role, created_at FROM users WHERE id = ?")
+        .get(Number(id));
+    if (!row)
+        return null;
+    return {
+        id: String(row.id),
+        email: row.email,
+        passwordHash: row.password_hash,
+        role: row.role,
+        createdAt: row.created_at
+    };
 }
 // Создание пользователя
 function createUser(//Емайл, пароль и доступ на вход
 email, passwordHash, role) {
-    const users = loadUsers();
+    const db = (0, sqlite_1.getDb)();
     const norm = email.trim().toLowerCase();
-    if (users.some((u) => u.email.toLowerCase() === norm)) {
+    const existing = db
+        .prepare("SELECT id FROM users WHERE LOWER(email) = ?")
+        .get(norm.toLowerCase());
+    if (existing) {
         throw new Error("USER_EXISTS");
     }
-    const isFirst = users.length === 0;
-    const newUser = {
-        id: nextId(users),
+    const totalRow = db
+        .prepare("SELECT COUNT(*) as count FROM users")
+        .get();
+    const isFirst = !totalRow || totalRow.count === 0;
+    const createdAt = new Date().toISOString();
+    const result = db
+        .prepare("INSERT INTO users (email, password_hash, role, created_at) VALUES (?, ?, ?, ?)")
+        .run(norm, passwordHash, role ?? (isFirst ? "admin" : "user"), createdAt);
+    const id = typeof result.lastInsertRowid === "bigint"
+        ? Number(result.lastInsertRowid)
+        : result.lastInsertRowid;
+    return {
+        id: String(id),
         email: norm,
         passwordHash,
         role: role ?? (isFirst ? "admin" : "user"),
-        createdAt: new Date().toISOString()
+        createdAt
     };
-    users.push(newUser);
-    saveUsers(users);
-    return newUser;
 }
 /** При старте: один пользователь → admin; все из ADMIN_EMAILS → admin. */
 function ensureFirstUserIsAdmin(adminEmails = []) {
-    const users = loadUsers();
-    if (users.length === 0)
+    const db = (0, sqlite_1.getDb)();
+    const totalRow = db
+        .prepare("SELECT COUNT(*) as count FROM users")
+        .get();
+    const total = totalRow?.count ?? 0;
+    if (total === 0)
         return;
+    const list = adminEmails.map((e) => e.trim().toLowerCase()).filter(Boolean);
+    const firstRow = db
+        .prepare("SELECT id, role FROM users ORDER BY id ASC LIMIT 1")
+        .get();
+    db.exec("BEGIN");
     let changed = false;
-    if (users.length === 1 && users[0].role !== "admin") {
-        users[0].role = "admin";
+    if (firstRow && firstRow.role !== "admin") {
+        db.prepare("UPDATE users SET role = 'admin' WHERE id = ?").run(firstRow.id);
         changed = true;
     }
-    const list = adminEmails.map((e) => e.trim().toLowerCase()).filter(Boolean);
-    for (const u of users) {
-        if (list.includes(u.email) && u.role !== "admin") {
-            u.role = "admin";
-            changed = true;
-        }
+    if (list.length > 0) {
+        const placeholders = list.map(() => "?").join(", ");
+        db
+            .prepare(`UPDATE users SET role = 'admin' WHERE LOWER(email) IN (${placeholders}) AND role <> 'admin'`)
+            .run(...list);
+        changed = true; // если не хотим считать реально изменённые строки, просто помечаем
     }
-    if (changed)
-        saveUsers(users);
+    db.exec("COMMIT");
 }

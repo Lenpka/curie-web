@@ -11,6 +11,7 @@ function registerClassifyRoute(router) {
             const format = req.query.format;
             if (format === "csv") {
                 res.setHeader("Content-Type", "text/csv; charset=utf-8");
+                res.setHeader("Content-Disposition", "attachment; filename=\"user_classifications.csv\"");
                 const header = "formula,magnetic_class,created_at,client_ip\n";
                 const rows = list.map((r) => [r.formula, r.magneticClass, r.createdAt, r.clientIp ?? ""].join(","));
                 return res.send(header + rows.join("\n"));
