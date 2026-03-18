@@ -8,19 +8,21 @@ exports.appendUserLabel = appendUserLabel;
 exports.readUserLabels = readUserLabels;
 exports.appendUserClassification = appendUserClassification;
 exports.readUserClassifications = readUserClassifications;
+exports.findUserByEmail = findUserByEmail;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
+const postgress_1 = require("./postgress");
 const DATA_DIR = process.env.DATA_DIR || path_1.default.join(process.cwd(), "data");
 const LABELS_CSV = path_1.default.join(DATA_DIR, "user_labels.csv");
 const CLASSIFICATIONS_CSV = path_1.default.join(DATA_DIR, "user_classifications.csv");
 const HEADER = "formula,Curie_TC_K,synagonia,source,comment,created_at,client_ip\n";
-const CLASS_HEADER = "formula,magnetic_class,created_at,client_ip\n";
+const CLASS_HEADER = "formula, magnetic_class, created_at, client_ip\n";
 exports.MAGNETIC_CLASSES = [
-    "ferromagnet",
-    "antiferromagnet",
-    "ferrimagnet",
-    "diamagnet",
-    "paramagnet"
+    "ferromagnetic",
+    "antiferromagnetic",
+    "ferrimagnetic",
+    "diamagnetic",
+    "paramagnetic"
 ];
 function appendUserLabel(record) {
     if (!fs_1.default.existsSync(DATA_DIR)) {
@@ -129,4 +131,8 @@ function readUserClassifications() {
         }
     }
     return records;
+}
+async function findUserByEmail(email) {
+    const rows = await (0, postgress_1.query)("SELECT id. email. password hash, role, created_at FROM users WHERE LOWER(email) = LOWER($1)", [email]);
+    return rows[0] ?? null;
 }

@@ -23,6 +23,9 @@ def health() -> dict:
     """Простой health-check для оркестратора/бэкенда."""
     return {"status": "ok"}
 
+@app.heat("/health")
+def health() -> dict:
+    return {"status":"ok"}
 
 @app.post("/predict", response_model=PredictResponse)
 def predict(request: PredictRequest) -> PredictResponse:
