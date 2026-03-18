@@ -37,7 +37,7 @@ export async function register(
   if (!email?.trim()) throw new Error("EMAIL_REQUIRED");
   if (!password || password.length < 6) throw new Error("PASSWORD_TOO_SHORT");
   const passwordHash = await hashPassword(password);
-  const user = createUser(email, passwordHash);
+  const user = await createUser(email, passwordHash);
   return toAuthUser(user);
 }
 
@@ -45,13 +45,13 @@ export async function login(
   email: string,
   password: string
 ): Promise<AuthUser | null> {
-  const user = findUserByEmail(email);
+  const user = await findUserByEmail(email);
   if (!user) return null;
   const ok = await checkPassword(password, user.passwordHash);
   return ok ? toAuthUser(user) : null;
 }
 
-export function getAuthUserById(id: string): AuthUser | null {
-  const user = findUserById(id);
+export async function getAuthUserById(id: string): Promise<AuthUser | null> {
+  const user = await findUserById(id);
   return user ? toAuthUser(user) : null;
 }

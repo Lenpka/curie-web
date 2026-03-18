@@ -1,4 +1,4 @@
-import { getDb } from "./sqlite";
+import { query } from "./postgres";
 
 export type UserRole = "user" | "admin";
 export interface UserRecord {
@@ -10,14 +10,19 @@ export interface UserRecord {
 }
 
 // Емэйл
-export function findUserByEmail (email: string) : UserRecord | null {
-  const db = getDb();
+export async function findUserByEmail(email: string): Promise<UserRecord | null> {
   const norm = email.trim().toLowerCase();
-  const row = db
-    .prepare<unknown[], { id: number; email: string; password_hash: string; role: string; created_at: string }>(
-      "SELECT id, email, password_hash, role, created_at FROM users WHERE LOWER(email) = ?"
-    )
-    .get(norm.toLowerCase());
+  const rows = await query<{
+    id: number;
+    email: string;
+    password_hash: string;
+    role: string;
+    created_at: string;
+  }>(
+    "SELECT id, email, password_hash, role, created_at FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
+    [norm]
+  );
+  const row = rows[0];
   if (!row) return null;
   return {
     id: String(row.id),
@@ -28,13 +33,18 @@ export function findUserByEmail (email: string) : UserRecord | null {
   };
 }
 // Id
-export function findUserById (id:string): UserRecord | null {
-  const db = getDb();
-  const row = db
-    .prepare<unknown[], { id: number; email: string; password_hash: string; role: string; created_at: string }>(
-      "SELECT id, email, password_hash, role, created_at FROM users WHERE id = ?"
-    )
-    .get(Number(id));
+export async function findUserById(id: string): Promise<UserRecord | null> {
+  const rows = await query<{
+    id: number;
+    email: string;
+    password_hash: string;
+    role: string;
+    created_at: string;
+  }>(
+    "SELECT id, email, password_hash, role, created_at FROM users WHERE id = $1 LIMIT 1",
+    [Number(id)]
+  );
+  const row = rows[0];
   if (!row) return null;
   return {
     id: String(row.id),
@@ -46,85 +56,64 @@ export function findUserById (id:string): UserRecord | null {
 }
 
 // Создание пользователя
-export function createUser ( //Емайл, пароль и доступ на вход
+export async function createUser( //Емайл, пароль и доступ на вход
   email: string,
   passwordHash: string,
   role?: UserRole
 ): // конец входа
- UserRecord {
-  const db = getDb();
+ Promise<UserRecord> {
   const norm = email.trim().toLowerCase();
+  const existing = await query<{ id: number }>(
+    "SELECT id FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1",
+    [norm]
+  );
+  if (existing[0]) throw new Error("USER_EXISTS");
 
-  const existing = db
-    .prepare<unknown[], { id: number }>(
-      "SELECT id FROM users WHERE LOWER(email) = ?"
-    )
-    .get(norm.toLowerCase());
-  if (existing) {
-    throw new Error("USER_EXISTS");
-  }
+  const countRows = await query<{ count: string }>("SELECT COUNT(*)::text as count FROM users");
+  const total = Number(countRows[0]?.count ?? "0");
+  const isFirst = total === 0;
 
-  const totalRow = db
-    .prepare<unknown[], { count: number }>("SELECT COUNT(*) as count FROM users")
-    .get();
-  const isFirst = !totalRow || totalRow.count === 0;
-
-  const createdAt = new Date().toISOString();
-
-  const result = db
-    .prepare<[string, string, string, string]>(
-      "INSERT INTO users (email, password_hash, role, created_at) VALUES (?, ?, ?, ?)"
-    )
-    .run(norm, passwordHash, role ?? (isFirst ? "admin" : "user"), createdAt);
-
-  const id = typeof result.lastInsertRowid === "bigint"
-    ? Number(result.lastInsertRowid)
-    : (result.lastInsertRowid as number);
-
+  const roleToSet = role ?? (isFirst ? "admin" : "user");
+  const createdRows = await query<{
+    id: number;
+    email: string;
+    password_hash: string;
+    role: string;
+    created_at: string;
+  }>(
+    "INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id, email, password_hash, role, created_at",
+    [norm, passwordHash, roleToSet]
+  );
+  const row = createdRows[0];
   return {
-    id: String(id),
-    email: norm,
-    passwordHash,
-    role: role ?? (isFirst ? "admin" : "user"),
-    createdAt
+    id: String(row.id),
+    email: row.email,
+    passwordHash: row.password_hash,
+    role: row.role as UserRole,
+    createdAt: row.created_at
   };
 }
 
 /** При старте: один пользователь → admin; все из ADMIN_EMAILS → admin. */
-export function ensureFirstUserIsAdmin(adminEmails: string[] = []): void {
-  const db = getDb();
-  const totalRow = db
-    .prepare<unknown[], { count: number }>("SELECT COUNT(*) as count FROM users")
-    .get();
-  const total = totalRow?.count ?? 0;
+export async function ensureFirstUserIsAdmin(adminEmails: string[] = []): Promise<void> {
+  const countRows = await query<{ count: string }>("SELECT COUNT(*)::text as count FROM users");
+  const total = Number(countRows[0]?.count ?? "0");
   if (total === 0) return;
 
   const list = adminEmails.map((e) => e.trim().toLowerCase()).filter(Boolean);
 
-  const firstRow = db
-    .prepare<unknown[], { id: number; role: string }>(
-      "SELECT id, role FROM users ORDER BY id ASC LIMIT 1"
-    )
-    .get();
-
-  db.exec("BEGIN");
-  let changed = false;
-
-  if (firstRow && firstRow.role !== "admin") {
-    db.prepare("UPDATE users SET role = 'admin' WHERE id = ?").run(firstRow.id);
-    changed = true;
+  const firstRows = await query<{ id: number; role: string }>(
+    "SELECT id, role FROM users ORDER BY id ASC LIMIT 1"
+  );
+  const first = firstRows[0];
+  if (first && first.role !== "admin") {
+    await query("UPDATE users SET role = 'admin' WHERE id = $1", [first.id]);
   }
-
   if (list.length > 0) {
-    const placeholders = list.map(() => "?").join(", ");
-    db
-      .prepare(
-        `UPDATE users SET role = 'admin' WHERE LOWER(email) IN (${placeholders}) AND role <> 'admin'`
-      )
-      .run(...list);
-    changed = true; // если не хотим считать реально изменённые строки, просто помечаем
+    await query(
+      "UPDATE users SET role = 'admin' WHERE LOWER(email) = ANY($1::text[]) AND role <> 'admin'",
+      [list]
+    );
   }
-
-  db.exec("COMMIT");
 }
  

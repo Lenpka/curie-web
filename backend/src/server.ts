@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import session from "express-session";
 
 import { config } from "./config";
+import { initDb } from "./db/postgres";
 import { ensureFirstUserIsAdmin } from "./db/userStorage";
 import { apiRateLimiter } from "./middleware/rateLimit";
 import { errorHandler } from "./middleware/errorHandler";
@@ -14,9 +15,11 @@ import { registerLabelRoute } from "./routes/label";
 import { registerClassifyRoute } from "./routes/classify";
 import { registerAuthRoutes } from "./routes/auth";
 
-ensureFirstUserIsAdmin(config.adminEmails);
+async function main() {
+  await initDb();
+  await ensureFirstUserIsAdmin(config.adminEmails);
 
-const app = express();
+  const app = express();
 
 app.use(helmet());
 app.use(
@@ -54,6 +57,12 @@ app.use("/api", apiRouter);
 
 app.use(errorHandler);
 
-app.listen(config.port, () => {
-  console.log(`Backend listening on port ${config.port}`);
+  app.listen(config.port, () => {
+    console.log(`Backend listening on port ${config.port}`);
+  });
+}
+
+main().catch((e) => {
+  console.error("Startup error:", e);
+  process.exit(1);
 });

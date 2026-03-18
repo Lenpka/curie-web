@@ -44,11 +44,15 @@ function registerAuthRoutes(router) {
         if (!userId) {
             return res.status(401).json({ error: "Not logged in", code: "auth_required" });
         }
-        const user = (0, authService_1.getAuthUserById)(userId);
-        if (!user) {
-            req.session = undefined;
-            return res.status(401).json({ error: "Not logged in", code: "auth_required" });
-        }
-        return res.json({ user: { id: user.id, email: user.email, role: user.role } });
+        (0, authService_1.getAuthUserById)(userId).then((user) => {
+            if (!user) {
+                req.session = undefined;
+                return res.status(401).json({ error: "Not logged in", code: "auth_required" });
+            }
+            return res.json({ user: { id: user.id, email: user.email, role: user.role } });
+        }).catch((e) => {
+            console.error("Auth/me error:", e);
+            return res.status(500).json({ error: "Failed to load user" });
+        });
     });
 }

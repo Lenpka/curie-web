@@ -31,17 +31,17 @@ async function register(email, password) {
     if (!password || password.length < 6)
         throw new Error("PASSWORD_TOO_SHORT");
     const passwordHash = await hashPassword(password);
-    const user = (0, userStorage_1.createUser)(email, passwordHash);
+    const user = await (0, userStorage_1.createUser)(email, passwordHash);
     return toAuthUser(user);
 }
 async function login(email, password) {
-    const user = (0, userStorage_1.findUserByEmail)(email);
+    const user = await (0, userStorage_1.findUserByEmail)(email);
     if (!user)
         return null;
     const ok = await checkPassword(password, user.passwordHash);
     return ok ? toAuthUser(user) : null;
 }
-function getAuthUserById(id) {
-    const user = (0, userStorage_1.findUserById)(id);
+async function getAuthUserById(id) {
+    const user = await (0, userStorage_1.findUserById)(id);
     return user ? toAuthUser(user) : null;
 }

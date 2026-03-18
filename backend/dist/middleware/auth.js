@@ -3,13 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.requireAuth = requireAuth;
 exports.requireAdmin = requireAdmin;
 const authService_1 = require("../services/authService");
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
     const userId = req.session?.userId;
     if (!userId) {
         res.status(401).json({ error: "Unauthorized", code: "auth_required" });
         return;
     }
-    const user = (0, authService_1.getAuthUserById)(userId);
+    const user = await (0, authService_1.getAuthUserById)(userId);
     if (!user) {
         req.session = undefined;
         res.status(401).json({ error: "Unauthorized", code: "auth_required" });

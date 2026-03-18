@@ -12,13 +12,13 @@ declare global {
   }
 }
 
-export function requireAuth(req: Request, res: Response, next: NextFunction): void {
+export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   const userId = (req.session as any)?.userId;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized", code: "auth_required" });
     return;
   }
-  const user = getAuthUserById(userId);
+  const user = await getAuthUserById(userId);
   if (!user) {
     req.session = undefined as any;
     res.status(401).json({ error: "Unauthorized", code: "auth_required" });

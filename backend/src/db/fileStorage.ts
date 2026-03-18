@@ -1,21 +1,21 @@
 import fs from "fs";
 import path from "path";
-import {query} from "./postgress";
 
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), "data");
 const LABELS_CSV = path.join(DATA_DIR, "user_labels.csv");
-const CLASSIFICATIONS_CSV = path.join(DATA_DIR, "user_classifications.csv")
+const CLASSIFICATIONS_CSV = path.join(DATA_DIR, "user_classifications.csv");
 const HEADER =
   "formula,Curie_TC_K,synagonia,source,comment,created_at,client_ip\n";
 
-const CLASS_HEADER = "formula, magnetic_class, created_at, client_ip\n"
+const CLASS_HEADER = "formula,magnetic_class,created_at,client_ip\n";
 
 export const MAGNETIC_CLASSES = [
-"ferromagnetic",
-"antiferromagnetic",
-"ferrimagnetic",
-"diamagnetic",
-"paramagnetic"] as const;
+  "ferromagnet",
+  "antiferromagnet",
+  "ferrimagnet",
+  "diamagnet",
+  "paramagnet"
+] as const;
 
 export type MagneticClass = (typeof MAGNETIC_CLASSES)[number];
 
@@ -143,10 +143,5 @@ export function readUserClassifications(): UserClassificationRecord[] {
   }
   return records;
 }
-export async function findUserByEmail (email: string) {
-  const rows = await query (
-    "SELECT id. email. password hash, role, created_at FROM users WHERE LOWER(email) = LOWER($1)",
-    [email]
-  );
-  return rows[0] ?? null;
-}
+
+// NOTE: user storage is implemented in `src/db/userStorage.ts` (Postgres).
