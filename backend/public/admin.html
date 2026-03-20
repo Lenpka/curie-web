@@ -177,7 +177,8 @@
       }
     }
 
-    document.getElementById("btn-refresh").addEventListener("click", loadData);
+    const btnRefresh = document.getElementById("btn-refresh");
+    if (btnRefresh) btnRefresh.addEventListener("click", loadData);
 
     // Скачивание через fetch + Blob: так гарантируем, что запрос уходит с cookie и скачивание работает стабильно.
     async function downloadCsv(url, filename) {
@@ -215,13 +216,22 @@
       }
     }
 
-    document.getElementById("btn-download-labels-csv").addEventListener("click", () => {
-      downloadCsv("/api/labels?format=csv", "user_labels.csv");
-    });
+    const btnDownloadLabels = document.getElementById("btn-download-labels-csv");
+    if (btnDownloadLabels) {
+      btnDownloadLabels.addEventListener("click", () => {
+        downloadCsv("/api/labels?format=csv", "user_labels.csv");
+      });
+    }
 
-    document.getElementById("btn-download-classify-csv").addEventListener("click", () => {
-      downloadCsv("/api/classifications?format=csv", "user_classifications.csv");
-    });
+    const btnDownloadClassify = document.getElementById("btn-download-classify-csv");
+    if (btnDownloadClassify) {
+      btnDownloadClassify.addEventListener("click", () => {
+        downloadCsv(
+          "/api/classifications?format=csv",
+          "user_classifications.csv"
+        );
+      });
+    }
 
     loadData();
 
@@ -238,12 +248,15 @@
       const theme = (saved === "light" || saved === "dark") ? saved : "dark";
       applyAdminTheme(theme);
     })();
-    document.getElementById("admin-theme-toggle").addEventListener("click", () => {
-      const isDark = document.body.classList.contains("theme-dark");
-      const next = isDark ? "light" : "dark";
-      localStorage.setItem(THEME_KEY, next);
-      applyAdminTheme(next);
-    });
+    const btnTheme = document.getElementById("admin-theme-toggle");
+    if (btnTheme) {
+      btnTheme.addEventListener("click", () => {
+        const isDark = document.body.classList.contains("theme-dark");
+        const next = isDark ? "light" : "dark";
+        localStorage.setItem(THEME_KEY, next);
+        applyAdminTheme(next);
+      });
+    }
   </script>
 </body>
 </html>
