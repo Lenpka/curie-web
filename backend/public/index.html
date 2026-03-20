@@ -484,6 +484,34 @@
       <div class="error" id="classify-error"></div>
     </div>
 
+    <!-- CIF UPLOAD: загрузка структур -->
+    <div class="card">
+      <h2>Загрузка CIF файлов</h2>
+      <div class="form-group">
+        <label for="cif-files">Файлы .cif *</label>
+        <input id="cif-files" type="file" accept=".cif" multiple />
+        <div class="hint">
+          Можно загрузить один или несколько CIF файлов. Данные сохраняются на сервере.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="cif-formula">Формула (опционально)</label>
+        <input id="cif-formula" type="text" placeholder="Например, Fe3O4" />
+      </div>
+
+      <div class="form-group">
+        <label for="cif-comment">Комментарий (опционально)</label>
+        <textarea id="cif-comment" rows="2" placeholder="Дополнительно: условия, источник, примечания..."></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="btn-upload-cif" type="button">Загрузить CIF</button>
+        <div class="status" id="cif-status"></div>
+      </div>
+      <div class="error" id="cif-error"></div>
+    </div>
+
   </div>
 
   <!-- APP LOGIC: переводы, работа с DOM и запросы к backend -->

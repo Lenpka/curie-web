@@ -179,23 +179,48 @@
 
     document.getElementById("btn-refresh").addEventListener("click", loadData);
 
-    // Скачивание: прямая ссылка с download — браузер сам отправит cookie и получит файл (Content-Disposition на сервере).
-    function downloadCsvByLink(url, filename) {
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => document.body.removeChild(a), 150);
+    // Скачивание через fetch + Blob: так гарантируем, что запрос уходит с cookie и скачивание работает стабильно.
+    async function downloadCsv(url, filename) {
+      try {
+        const res = await fetch(url, fetchOpts);
+        if (res.status === 401 || res.status === 403) {
+          showMsg("Доступ только для администратора.", "error");
+          return;
+        }
+        if (!res.ok) {
+          showMsg("Ошибка загрузки CSV: " + res.status, "error");
+          return;
+        }
+        const text = await res.text();
+        if (!text) {
+          showMsg("Пустой CSV.", "error");
+          return;
+        }
+        const blob = new Blob(["\uFEFF" + text], {
+          type: "text/csv;charset=utf-8"
+        });
+        const urlObj = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = urlObj;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(urlObj);
+        }, 200);
+      } catch (e) {
+        console.error(e);
+        showMsg("Ошибка скачивания CSV.", "error");
+      }
     }
 
     document.getElementById("btn-download-labels-csv").addEventListener("click", () => {
-      downloadCsvByLink("/api/labels?format=csv", "user_labels.csv");
+      downloadCsv("/api/labels?format=csv", "user_labels.csv");
     });
 
     document.getElementById("btn-download-classify-csv").addEventListener("click", () => {
-      downloadCsvByLink("/api/classifications?format=csv", "user_classifications.csv");
+      downloadCsv("/api/classifications?format=csv", "user_classifications.csv");
     });
 
     loadData();

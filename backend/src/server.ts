@@ -13,6 +13,7 @@ import { errorHandler } from "./middleware/errorHandler";
 import { registerPredictRoute } from "./routes/predict";
 import { registerLabelRoute } from "./routes/label";
 import { registerClassifyRoute } from "./routes/classify";
+import { registerCifRoute } from "./routes/cif";
 import { registerAuthRoutes } from "./routes/auth";
 
 async function main() {
@@ -53,6 +54,7 @@ registerAuthRoutes(apiRouter);
 registerPredictRoute(apiRouter);
 registerLabelRoute(apiRouter);
 registerClassifyRoute(apiRouter);
+  registerCifRoute(apiRouter);
 app.use("/api", apiRouter);
 
 app.use(errorHandler);

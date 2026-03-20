@@ -211,7 +211,15 @@ const els = {
   classifyClassSelect: document.getElementById("classify-class"),
   classifyStatus: document.getElementById("classify-status"),
   classifyError: document.getElementById("classify-error"),
-  btnClassify: document.getElementById("btn-classify")
+  btnClassify: document.getElementById("btn-classify"),
+
+  // CIF upload
+  cifFilesInput: document.getElementById("cif-files"),
+  cifFormulaInput: document.getElementById("cif-formula"),
+  cifCommentInput: document.getElementById("cif-comment"),
+  cifStatus: document.getElementById("cif-status"),
+  cifError: document.getElementById("cif-error"),
+  btnUploadCif: document.getElementById("btn-upload-cif")
 };
 
 const fetchOpts = { credentials: "include" };
@@ -626,6 +634,60 @@ if (els.btnClassify) {
       if (els.classifyError) els.classifyError.textContent = t.classifyErrorRequest;
     } finally {
       els.btnClassify.disabled = false;
+    }
+  });
+}
+
+// CIF upload: POST /api/cif/upload
+if (els.btnUploadCif) {
+  els.btnUploadCif.addEventListener("click", async () => {
+    const files = els.cifFilesInput?.files;
+    if (els.cifError) els.cifError.textContent = "";
+    if (els.cifStatus) els.cifStatus.textContent = "";
+
+    if (!files || files.length === 0) {
+      if (els.cifError) els.cifError.textContent = "Выберите хотя бы один .cif файл.";
+      return;
+    }
+
+    // Простая валидация расширения
+    const validFiles = Array.from(files).filter((f) => (f.name || "").toLowerCase().endsWith(".cif"));
+    if (validFiles.length === 0) {
+      if (els.cifError) els.cifError.textContent = "Нужны файлы с расширением .cif.";
+      return;
+    }
+
+    els.btnUploadCif.disabled = true;
+    if (els.cifStatus) els.cifStatus.textContent = "Загрузка...";
+
+    try {
+      const formData = new FormData();
+      validFiles.forEach((f) => formData.append("files", f, f.name));
+      const formula = els.cifFormulaInput?.value?.trim() ?? "";
+      const comment = els.cifCommentInput?.value?.trim() ?? "";
+      if (formula) formData.append("formula", formula);
+      if (comment) formData.append("comment", comment);
+
+      const res = await fetch("/api/cif/upload", {
+        ...fetchOpts,
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.status === "ok") {
+        if (els.cifStatus) els.cifStatus.textContent = "CIF файлы загружены.";
+        if (els.cifFilesInput) els.cifFilesInput.value = "";
+        if (els.cifFormulaInput) els.cifFormulaInput.value = "";
+        if (els.cifCommentInput) els.cifCommentInput.value = "";
+      } else {
+        if (els.cifError) els.cifError.textContent = data.error || "Не удалось загрузить CIF.";
+      }
+    } catch (e) {
+      console.error(e);
+      if (els.cifError) els.cifError.textContent = "Ошибка сети при загрузке CIF.";
+    } finally {
+      els.btnUploadCif.disabled = false;
     }
   });
 }

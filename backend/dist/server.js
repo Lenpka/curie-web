@@ -17,6 +17,7 @@ const errorHandler_1 = require("./middleware/errorHandler");
 const predict_1 = require("./routes/predict");
 const label_1 = require("./routes/label");
 const classify_1 = require("./routes/classify");
+const cif_1 = require("./routes/cif");
 const auth_1 = require("./routes/auth");
 async function main() {
     await (0, postgres_1.initDb)();
@@ -48,6 +49,7 @@ async function main() {
     (0, predict_1.registerPredictRoute)(apiRouter);
     (0, label_1.registerLabelRoute)(apiRouter);
     (0, classify_1.registerClassifyRoute)(apiRouter);
+    (0, cif_1.registerCifRoute)(apiRouter);
     app.use("/api", apiRouter);
     app.use(errorHandler_1.errorHandler);
     app.listen(config_1.config.port, () => {
