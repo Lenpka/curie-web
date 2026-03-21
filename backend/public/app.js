@@ -30,9 +30,11 @@ const translations = {
     labelCardHint:
       "Обязательны формула и T\u2093. Остальное — по желанию, в блоке ниже.",
     labelOptionalSummary:
-      "Дополнительно: анизотропия, сингония, CIF, ось лёгкого намагничивания",
+      "Дополнительно: тип структуры, анизотропия, сингония, CIF, ось",
     labelOptionalHint:
-      "Заполните только то, что известно. CIF сохраняется на сервере и связывается с этой записью.",
+      "Тип структуры вводите сами. Сингония — кристаллографическая система. CIF — по желанию.",
+    labelStructureLabel: "Тип структуры",
+    labelStructurePh: "",
     labelEasyAxisLabel: "Ось лёгкого намагничивания",
     labelEasyAxisPh: "Например: [001], c-axis, в плоскости базиса…",
     labelCifLabel: "Файл структуры (.cif)",
@@ -111,9 +113,11 @@ const translations = {
     labelCardHint:
       "Formula and T\u2093 are required. Everything else is optional (expand below).",
     labelOptionalSummary:
-      "Optional: anisotropy, crystal system, CIF, easy axis",
+      "Optional: structure type, anisotropy, crystal system, CIF, easy axis",
     labelOptionalHint:
-      "Fill in what you know. The CIF is stored on the server and linked to this row.",
+      "Structure type: enter your own text. Crystal system = symmetry class. CIF optional.",
+    labelStructureLabel: "Structure type",
+    labelStructurePh: "",
     labelEasyAxisLabel: "Easy magnetization axis",
     labelEasyAxisPh: "e.g. [001], c-axis, in the basal plane…",
     labelCifLabel: "Structure file (.cif)",
@@ -124,7 +128,7 @@ const translations = {
     labelTcUnitLabel: "Units",
     labelAnisoLabel: "Anisotropy constant (MJ/m³)",
     labelAnisoPh: "e.g., 0.85",
-    labelSynLabel: "Crystal system (optional)",
+    labelSynLabel: "Crystal system (symmetry)",
     synOptions: [
       "— not specified —",
       "triclinic",
@@ -197,6 +201,8 @@ const els = {
   labelTcUnitSelect: document.getElementById("label-tc-unit"),
   labelAnisoLabel: document.getElementById("label-aniso-label"),
   labelAnisoInput: document.getElementById("label-aniso"),
+  labelStructureLabel: document.getElementById("label-structure-label"),
+  labelStructureInput: document.getElementById("label-structure-type"),
   labelSynLabel: document.getElementById("label-syn-label"),
   labelSynSelect: document.getElementById("label-syn"),
   labelSourceLabel: document.getElementById("label-source-label"),
@@ -323,6 +329,11 @@ function applyTranslations() {
   }
   if (els.labelOptionalSummary) els.labelOptionalSummary.textContent = t.labelOptionalSummary;
   if (els.labelOptionalHint) els.labelOptionalHint.textContent = t.labelOptionalHint;
+  if (els.labelStructureLabel)
+    els.labelStructureLabel.textContent = t.labelStructureLabel;
+  if (els.labelStructureInput) {
+    els.labelStructureInput.placeholder = t.labelStructurePh || "";
+  }
   if (els.labelFormulaLabel)
     els.labelFormulaLabel.textContent = t.labelFormulaLabel;
   if (els.labelFormulaInput)
@@ -606,6 +617,7 @@ if (els.labelButton) {
     const formula = els.labelFormulaInput?.value?.trim() ?? "";
     const tcRaw = els.labelTcInput?.value?.trim() ?? "";
     const tcUnit = els.labelTcUnitSelect?.value === "C" ? "C" : "K";
+    const structureType = els.labelStructureInput?.value?.trim() || undefined;
     const synagonia = els.labelSynSelect?.value?.trim() || undefined;
     const source = els.labelSourceInput?.value?.trim() || undefined;
     const comment = els.labelCommentInput?.value?.trim() || undefined;
@@ -631,6 +643,7 @@ if (els.labelButton) {
       fd.append("formula", formula);
       fd.append("tcValue", String(tcNum));
       fd.append("tcUnit", tcUnit);
+      if (structureType) fd.append("structureType", structureType);
       if (synagonia) fd.append("synagonia", synagonia);
       if (source) fd.append("source", source);
       if (comment) fd.append("comment", comment);
@@ -653,6 +666,7 @@ if (els.labelButton) {
         if (els.labelTcInput) els.labelTcInput.value = "";
         if (els.labelAnisoInput) els.labelAnisoInput.value = "";
         if (els.labelEasyAxisInput) els.labelEasyAxisInput.value = "";
+        if (els.labelStructureInput) els.labelStructureInput.value = "";
         if (els.labelSynSelect) els.labelSynSelect.selectedIndex = 0;
         if (els.labelSourceInput) els.labelSourceInput.value = "";
         if (els.labelCommentInput) els.labelCommentInput.value = "";

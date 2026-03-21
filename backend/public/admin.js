@@ -23,7 +23,7 @@ function renderLabelsTable(labels) {
     return;
   }
   let html =
-    "<table><thead><tr><th>Формула</th><th>T<sub>C</sub> (K)</th><th>K<sub>a</sub> (МДж/м³)</th><th>Ось лёгкого намагничивания</th><th>CIF (файл)</th><th>Сингония</th><th>Источник</th><th>Комментарий</th><th>Дата</th></tr></thead><tbody>";
+    "<table><thead><tr><th>Формула</th><th>T<sub>C</sub> (K)</th><th>Тип структуры</th><th>K<sub>a</sub> (МДж/м³)</th><th>Ось лёгкого намагничивания</th><th>CIF (файл)</th><th>Сингония</th><th>Источник</th><th>Комментарий</th><th>Дата</th></tr></thead><tbody>";
   labels.forEach((r) => {
     const ka =
       r.anisotropyMJm3 != null && Number.isFinite(Number(r.anisotropyMJm3))
@@ -34,6 +34,8 @@ function renderLabelsTable(labels) {
       escapeHtml(r.formula) +
       "</td><td>" +
       (r.curieTcK != null ? Number(r.curieTcK).toFixed(2) : "") +
+      "</td><td>" +
+      escapeHtml(r.structureType || "") +
       "</td><td>" +
       escapeHtml(ka) +
       "</td><td>" +

@@ -4,6 +4,8 @@ export interface RawLabelPayload {
   formula: string;
   tcValue: number;
   tcUnit: "K" | "C";
+  /** Семейство структуры (NiAs-type, pyrite-structure disulphides, …) */
+  structureType?: string;
   synagonia?: string;
   /** K_a, МДж/м³ */
   anisotropyMJm3?: number;
@@ -19,6 +21,7 @@ export function saveUserLabel(payload: RawLabelPayload): void {
     formula,
     tcValue,
     tcUnit,
+    structureType,
     synagonia,
     anisotropyMJm3,
     easyAxis,
@@ -34,6 +37,7 @@ export function saveUserLabel(payload: RawLabelPayload): void {
   appendUserLabel({
     formula: formula.trim(),
     curieTcK,
+    structureType: structureType?.trim() || undefined,
     synagonia,
     anisotropyMJm3,
     easyAxis: easyAxis?.trim() || undefined,

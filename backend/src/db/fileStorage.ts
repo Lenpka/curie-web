@@ -6,9 +6,12 @@ const LABELS_CSV = path.join(DATA_DIR, "user_labels.csv");
 const CLASSIFICATIONS_CSV = path.join(DATA_DIR, "user_classifications.csv");
 const CIFS_CSV = path.join(DATA_DIR, "user_cifs.csv");
 
-/** Новый формат: анизотропия, ось лёгкого намагничивания, имя сохранённого CIF */
+/**
+ * Формат CSV: тип структуры — литературное семейство (As-type sulphides, pyrite-type и т.д.),
+ * сингония — кристаллографическая система.
+ */
 export const LABEL_HEADER =
-  "formula,Curie_TC_K,synagonia,anisotropy_MJm3,easy_axis,cif_stored_name,source,comment,created_at,client_ip\n";
+  "formula,Curie_TC_K,structure_type,synagonia,anisotropy_MJm3,easy_axis,cif_stored_name,source,comment,created_at,client_ip\n";
 
 const CLASS_HEADER = "formula,magnetic_class,created_at,client_ip\n";
 
@@ -26,6 +29,8 @@ export type MagneticClass = (typeof MAGNETIC_CLASSES)[number];
 export interface UserLabelRecord {
   formula: string;
   curieTcK: number;
+  /** Семейство структуры по справочнику (NiAs-type, pyrite-structure …) */
+  structureType?: string;
   synagonia?: string;
   /** K_a, МДж/м³ */
   anisotropyMJm3?: number;
@@ -47,13 +52,11 @@ function csvEscapeCell(val: string | number): string {
   return s;
 }
 
-/** Старый CSV (7 колонок данных) → новый заголовок и пустые поля для новых столбцов */
-function migrateLabelsCsvIfNeeded(): void {
-  if (!fs.existsSync(LABELS_CSV)) return;
+/** v1: 7 колонок → актуальный заголовок (11 колонок) */
+function migrateLabelsV1ToCurrent(): void {
   const raw = fs.readFileSync(LABELS_CSV, "utf8");
   const lines = raw.trim().split("\n");
   if (lines.length === 0) return;
-  if (lines[0].includes("anisotropy_MJm3")) return;
   const newLines: string[] = [LABEL_HEADER.trim()];
   for (let i = 1; i < lines.length; i++) {
     const parts = parseCsvLine(lines[i]);
@@ -61,6 +64,7 @@ function migrateLabelsCsvIfNeeded(): void {
       const row = [
         parts[0],
         parts[1],
+        "",
         parts[2] ?? "",
         "",
         "",
@@ -76,12 +80,63 @@ function migrateLabelsCsvIfNeeded(): void {
   fs.writeFileSync(LABELS_CSV, newLines.join("\n") + "\n", "utf8");
 }
 
+/** v2: 10 колонок без structure_type → вставить пустую колонку после T_C */
+function migrateLabelsV2ToCurrent(): void {
+  const raw = fs.readFileSync(LABELS_CSV, "utf8");
+  const lines = raw.trim().split("\n");
+  if (lines.length < 2) {
+    fs.writeFileSync(LABELS_CSV, LABEL_HEADER, "utf8");
+    return;
+  }
+  const headerParts = parseCsvLine(lines[0]);
+  const hmap: Record<string, number> = {};
+  headerParts.forEach((h, idx) => {
+    hmap[h.trim()] = idx;
+  });
+  const newLines: string[] = [LABEL_HEADER.trim()];
+  const g = (parts: string[], key: string) =>
+    hmap[key] !== undefined ? (parts[hmap[key]] ?? "").trim() : "";
+
+  for (let i = 1; i < lines.length; i++) {
+    const parts = parseCsvLine(lines[i]);
+    const row = [
+      g(parts, "formula"),
+      g(parts, "Curie_TC_K"),
+      "",
+      g(parts, "synagonia"),
+      g(parts, "anisotropy_MJm3"),
+      g(parts, "easy_axis"),
+      g(parts, "cif_stored_name"),
+      g(parts, "source"),
+      g(parts, "comment"),
+      g(parts, "created_at"),
+      g(parts, "client_ip")
+    ].map(csvEscapeCell);
+    newLines.push(row.join(","));
+  }
+  fs.writeFileSync(LABELS_CSV, newLines.join("\n") + "\n", "utf8");
+}
+
+/** Привести user_labels.csv к текущей схеме (structure_type). */
+function ensureLabelCsvMigrated(): void {
+  if (!fs.existsSync(LABELS_CSV)) return;
+  const lines = fs.readFileSync(LABELS_CSV, "utf8").trim().split("\n");
+  if (lines.length === 0) return;
+  const h = lines[0];
+  if (h.includes("structure_type")) return;
+  if (h.includes("anisotropy_MJm3")) {
+    migrateLabelsV2ToCurrent();
+  } else {
+    migrateLabelsV1ToCurrent();
+  }
+}
+
 export function appendUserLabel(record: UserLabelRecord): void {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
   if (fs.existsSync(LABELS_CSV)) {
-    migrateLabelsCsvIfNeeded();
+    ensureLabelCsvMigrated();
   }
   const isNewFile = !fs.existsSync(LABELS_CSV);
   const aniso =
@@ -92,6 +147,7 @@ export function appendUserLabel(record: UserLabelRecord): void {
     [
       csvEscapeCell(record.formula),
       csvEscapeCell(record.curieTcK.toFixed(2)),
+      csvEscapeCell(record.structureType ?? ""),
       csvEscapeCell(record.synagonia ?? ""),
       csvEscapeCell(aniso),
       csvEscapeCell(record.easyAxis ?? ""),
@@ -113,6 +169,7 @@ export function readUserLabels(): UserLabelRecord[] {
   if (!fs.existsSync(LABELS_CSV)) {
     return [];
   }
+  ensureLabelCsvMigrated();
   const raw = fs.readFileSync(LABELS_CSV, "utf8");
   const lines = raw.trim().split("\n");
   if (lines.length < 2) return [];
@@ -133,6 +190,7 @@ export function readUserLabels(): UserLabelRecord[] {
       records.push({
         formula: g(parts, "formula"),
         curieTcK: Number(g(parts, "Curie_TC_K")) || 0,
+        structureType: g(parts, "structure_type") || undefined,
         synagonia: g(parts, "synagonia") || undefined,
         anisotropyMJm3:
           anisoRaw !== "" && Number.isFinite(Number(anisoRaw))

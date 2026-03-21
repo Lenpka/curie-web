@@ -143,7 +143,7 @@
       padding: 12px 14px;
       border: 1px dashed var(--border);
       border-radius: var(--radius);
-      background: rgba(15, 23, 42, 0.45);
+      background: rgba(49, 68, 113, 0.45);
     }
     .form-details summary {
       cursor: pointer;
@@ -446,10 +446,21 @@
       </div>
 
       <details class="form-details" id="label-optional-block" open>
-        <summary id="label-optional-summary">Дополнительно: анизотропия, сингония, CIF, ось лёгкого намагничивания</summary>
+        <summary id="label-optional-summary">Дополнительно: тип структуры, анизотропия, сингония, CIF, ось</summary>
         <p class="hint-inline" id="label-optional-hint">
-          Заполните только то, что известно. CIF сохраняется на сервере и связывается с этой записью.
+          <strong>Тип структуры</strong> — вводите сами, как в вашей таблице или статье.
+          <strong>Сингония</strong> — кристаллографическая система. CIF при желании прикрепите ниже.
         </p>
+
+        <div class="form-group">
+          <label id="label-structure-label" for="label-structure-type">Тип структуры</label>
+          <input
+            id="label-structure-type"
+            type="text"
+            placeholder=""
+            autocomplete="off"
+          />
+        </div>
 
         <div class="form-group">
           <label id="label-aniso-label" for="label-aniso">Константа анизотропии K<sub>a</sub> (МДж/м³)</label>

@@ -24,6 +24,7 @@ function parseLabelBody(req: Request): {
   formula: string;
   tcValue: number;
   tcUnit: "K" | "C";
+  structureType?: string;
   synagonia?: string;
   anisotropyMJm3?: number;
   easyAxis?: string;
@@ -37,6 +38,10 @@ function parseLabelBody(req: Request): {
   const formula = typeof b.formula === "string" ? b.formula : String(b.formula ?? "");
   const tcRaw = multipart ? parseFloat(String(b.tcValue ?? "")) : Number(b.tcValue);
   const tcUnit = b.tcUnit === "C" ? "C" : "K";
+  const structureType =
+    typeof b.structureType === "string" && b.structureType.trim()
+      ? b.structureType.trim().slice(0, 500)
+      : undefined;
   const synagonia =
     typeof b.synagonia === "string" && b.synagonia.trim()
       ? b.synagonia.trim()
@@ -80,6 +85,7 @@ export function registerLabelRoute(router: Router): void {
           [
             csvEscapeCell(r.formula),
             csvEscapeCell(r.curieTcK.toFixed(2)),
+            csvEscapeCell(r.structureType ?? ""),
             csvEscapeCell(r.synagonia ?? ""),
             csvEscapeCell(
               r.anisotropyMJm3 != null && Number.isFinite(r.anisotropyMJm3)
@@ -122,8 +128,18 @@ export function registerLabelRoute(router: Router): void {
     (req: Request, res: Response) => {
       const parsed = parseLabelBody(req);
 
-      const { formula, tcValue, tcUnit, synagonia, anisotropyMJm3, easyAxis, source, comment, cifFile } =
-        parsed;
+      const {
+        formula,
+        tcValue,
+        tcUnit,
+        structureType,
+        synagonia,
+        anisotropyMJm3,
+        easyAxis,
+        source,
+        comment,
+        cifFile
+      } = parsed;
 
       if (typeof formula !== "string" || !formula.trim()) {
         return res.status(400).json({ error: "Field 'formula' is required" });
@@ -158,6 +174,7 @@ export function registerLabelRoute(router: Router): void {
           formula,
           tcValue,
           tcUnit,
+          structureType,
           synagonia,
           anisotropyMJm3,
           easyAxis,
