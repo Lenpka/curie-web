@@ -138,6 +138,32 @@
       box-shadow: var(--shadow-card);
     }
     .card + .card { margin-top: 24px; }
+    .form-details {
+      margin: 16px 0;
+      padding: 12px 14px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: rgba(15, 23, 42, 0.45);
+    }
+    .form-details summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent-hover);
+      list-style: none;
+    }
+    .form-details summary::-webkit-details-marker { display: none; }
+    .form-details summary::before {
+      content: "▸ ";
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    .form-details[open] summary::before { transform: rotate(90deg); }
+    .form-details .hint-inline {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 8px 0 12px;
+      line-height: 1.45;
+    }
     .card label {
       display: block;
       font-size: 1rem;
@@ -317,7 +343,7 @@
         </div>
         <div id="user-info" class="user-info" style="display:none;">
           <span id="user-email" class="user-email"></span>
-          <a id="link-admin" href="/admin.html" class="btn-ghost" style="display:none;">Админка</a>
+          <a id="link-admin" href="/admin.html" class="btn-ghost" style="display:none;">Панель администратора</a>
           <button type="button" id="btn-logout" class="btn-ghost">Выйти</button>
         </div>
         <div class="lang-toggle">
@@ -386,13 +412,16 @@
 
 
 
-    <!-- LABEL CARD: форма для отправки пользовательской разметки -->
+    <!-- LABEL CARD: данные по формуле (T_C + опционально сингония, CIF, K_a, ось) -->
     <div class="card">
-      <h2 id="label-card-title">Добавить разметку (T<sub>C</sub>, сингония, источник)</h2>
+      <h2 id="label-card-title">Данные по формуле</h2>
+      <p class="hint" id="label-card-hint" style="margin-top: -8px; margin-bottom: 16px;">
+        Обязательны формула и T<sub>C</sub>. Остальное — по желанию, в блоке ниже.
+      </p>
 
       <div class="form-group">
         <label id="label-formula-label" for="label-formula">Формула *</label>
-        <input id="label-formula" type="text" placeholder="Fe3O4, Nd2Fe14B" />
+        <input id="label-formula" type="text" placeholder="Fe3O4, Nd2Fe14B" autocomplete="off" />
       </div>
 
       <div class="form-row">
@@ -416,31 +445,53 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label id="label-aniso-label" for="label-aniso">Константа анизотропии (МДж/м³)</label>
-        <input
-          id="label-aniso"
-          type="number"
-          step="0.01"
-          min="0"
-          max="100"
-          placeholder="Например, 0.85"
-        />
-      </div>
+      <details class="form-details" id="label-optional-block" open>
+        <summary id="label-optional-summary">Дополнительно: анизотропия, сингония, CIF, ось лёгкого намагничивания</summary>
+        <p class="hint-inline" id="label-optional-hint">
+          Заполните только то, что известно. CIF сохраняется на сервере и связывается с этой записью.
+        </p>
 
-      <div class="form-group">
-        <label id="label-syn-label" for="label-syn">Сингония (необязательно)</label>
-        <select id="label-syn">
-          <option value="">— не указано —</option>
-          <option value="триклинная">триклинная</option>
-          <option value="моноклинная">моноклинная</option>
-          <option value="ромбическая">ромбическая</option>
-          <option value="тетрагональная">тетрагональная</option>
-          <option value="гексагональная">гексагональная</option>
-          <option value="ромбоэдрическая">ромбоэдрическая</option>
-          <option value="кубическая">кубическая</option>
-        </select>
-      </div>
+        <div class="form-group">
+          <label id="label-aniso-label" for="label-aniso">Константа анизотропии K<sub>a</sub> (МДж/м³)</label>
+          <input
+            id="label-aniso"
+            type="number"
+            step="0.000001"
+            min="0"
+            max="1000"
+            placeholder="Например, 0.85"
+          />
+        </div>
+
+        <div class="form-group">
+          <label id="label-easy-axis-label" for="label-easy-axis">Ось лёгкого намагничивания</label>
+          <input
+            id="label-easy-axis"
+            type="text"
+            placeholder="Например: [001], c-axis, в плоскости базиса…"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label id="label-syn-label" for="label-syn">Сингония</label>
+          <select id="label-syn">
+            <option value="">— не указано —</option>
+            <option value="триклинная">триклинная</option>
+            <option value="моноклинная">моноклинная</option>
+            <option value="ромбическая">ромбическая</option>
+            <option value="тетрагональная">тетрагональная</option>
+            <option value="гексагональная">гексагональная</option>
+            <option value="ромбоэдрическая">ромбоэдрическая</option>
+            <option value="кубическая">кубическая</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label id="label-cif-label" for="label-cif">Файл структуры (.cif)</label>
+          <input id="label-cif" type="file" accept=".cif" />
+        </div>
+      </details>
 
       <div class="form-group">
         <label id="label-source-label" for="label-source">Источник (статья, DOI, база)</label>
@@ -453,7 +504,7 @@
       </div>
 
       <div class="actions">
-        <button class="primary" id="btn-label">Отправить разметку</button>
+        <button class="primary" id="btn-label">Сохранить данные по формуле</button>
         <div class="status" id="label-status"></div>
       </div>
       <div class="error" id="label-error"></div>
@@ -484,14 +535,17 @@
       <div class="error" id="classify-error"></div>
     </div>
 
-    <!-- CIF UPLOAD: загрузка структур -->
+    <!-- CIF UPLOAD: массовая загрузка без привязки к строке разметки (нужен вход) -->
     <div class="card">
-      <h2>Загрузка CIF файлов</h2>
+      <h2 id="cif-bulk-title">Массовая загрузка CIF</h2>
+      <p class="hint" id="cif-bulk-hint" style="margin-top: -8px;">
+        Несколько файлов без формы выше — только для зарегистрированных пользователей (нужна авторизация).
+      </p>
       <div class="form-group">
         <label for="cif-files">Файлы .cif *</label>
         <input id="cif-files" type="file" accept=".cif" multiple />
-        <div class="hint">
-          Можно загрузить один или несколько CIF файлов. Данные сохраняются на сервере.
+        <div class="hint" id="cif-bulk-files-hint">
+          Можно загрузить один или несколько CIF. Для одной формулы с T<sub>C</sub> и полями выше удобнее форма «Данные по формуле».
         </div>
       </div>
 

@@ -22,9 +22,33 @@ function renderLabelsTable(labels) {
     wrap.innerHTML = "<p class=\"msg info\">Записей пока нет.</p>";
     return;
   }
-  let html = "<table><thead><tr><th>Формула</th><th>T<sub>C</sub> (K)</th><th>Сингония</th><th>Источник</th><th>Комментарий</th><th>Дата</th></tr></thead><tbody>";
+  let html =
+    "<table><thead><tr><th>Формула</th><th>T<sub>C</sub> (K)</th><th>K<sub>a</sub> (МДж/м³)</th><th>Ось лёгкого намагничивания</th><th>CIF (файл)</th><th>Сингония</th><th>Источник</th><th>Комментарий</th><th>Дата</th></tr></thead><tbody>";
   labels.forEach((r) => {
-    html += "<tr><td>" + escapeHtml(r.formula) + "</td><td>" + (r.curieTcK != null ? Number(r.curieTcK).toFixed(2) : "") + "</td><td>" + escapeHtml(r.synagonia || "") + "</td><td>" + escapeHtml(r.source || "") + "</td><td>" + escapeHtml(r.comment || "") + "</td><td>" + escapeHtml(r.createdAt || "") + "</td></tr>";
+    const ka =
+      r.anisotropyMJm3 != null && Number.isFinite(Number(r.anisotropyMJm3))
+        ? Number(r.anisotropyMJm3).toFixed(4)
+        : "";
+    html +=
+      "<tr><td>" +
+      escapeHtml(r.formula) +
+      "</td><td>" +
+      (r.curieTcK != null ? Number(r.curieTcK).toFixed(2) : "") +
+      "</td><td>" +
+      escapeHtml(ka) +
+      "</td><td>" +
+      escapeHtml(r.easyAxis || "") +
+      "</td><td>" +
+      escapeHtml(r.cifStoredName || "") +
+      "</td><td>" +
+      escapeHtml(r.synagonia || "") +
+      "</td><td>" +
+      escapeHtml(r.source || "") +
+      "</td><td>" +
+      escapeHtml(r.comment || "") +
+      "</td><td>" +
+      escapeHtml(r.createdAt || "") +
+      "</td></tr>";
   });
   wrap.innerHTML = html + "</tbody></table>";
 }

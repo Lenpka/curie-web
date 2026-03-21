@@ -26,13 +26,22 @@ const translations = {
     errorSuggestion: "Возможно, вы имели в виду: {suggestion}",
 
     // LABEL FORM (RU)
-    labelCardTitle: "Добавить разметку (T\u2093, сингония, источник)",
+    labelCardTitle: "Данные по формуле",
+    labelCardHint:
+      "Обязательны формула и T\u2093. Остальное — по желанию, в блоке ниже.",
+    labelOptionalSummary:
+      "Дополнительно: анизотропия, сингония, CIF, ось лёгкого намагничивания",
+    labelOptionalHint:
+      "Заполните только то, что известно. CIF сохраняется на сервере и связывается с этой записью.",
+    labelEasyAxisLabel: "Ось лёгкого намагничивания",
+    labelEasyAxisPh: "Например: [001], c-axis, в плоскости базиса…",
+    labelCifLabel: "Файл структуры (.cif)",
     labelFormulaLabel: "Формула *",
     labelFormulaPh: "Fe3O4, Nd2Fe14B",
     labelTcLabel: "Температура Кюри *",
     labelTcPh: "Например, 785",
     labelTcUnitLabel: "Единицы",
-    labelAnisoLabel: "Константа анизотропии (МДж/м³)",
+    labelAnisoLabel: "Константа анизотропии K_a (МДж/м³)",
     labelAnisoPh: "Например, 0.85",
     labelSynLabel: "Сингония (необязательно)",
     synOptions: [
@@ -50,7 +59,12 @@ const translations = {
     labelCommentLabel: "Комментарий",
     labelCommentPh:
       "Дополнительные примечания, условия измерений и т.д.",
-    btnLabel: "Отправить разметку",
+    btnLabel: "Сохранить данные по формуле",
+    cifBulkTitle: "Массовая загрузка CIF",
+    cifBulkHint:
+      "Несколько файлов без формы выше — только для зарегистрированных пользователей (нужна авторизация).",
+    cifBulkFilesHint:
+      "Можно загрузить один или несколько CIF. Для одной формулы с T\u2093 и полями выше удобнее форма «Данные по формуле».",
     labelStatusIdle: "",
     labelStatusSuccess: "Разметка отправлена.",
     labelErrorRequired: "Укажите хотя бы формулу и температуру.",
@@ -93,7 +107,16 @@ const translations = {
     errorSuggestion: "Did you mean: {suggestion}",
 
     // LABEL FORM (EN)
-    labelCardTitle: "Add annotation (T\u2093, symmetry, source)",
+    labelCardTitle: "Data by formula",
+    labelCardHint:
+      "Formula and T\u2093 are required. Everything else is optional (expand below).",
+    labelOptionalSummary:
+      "Optional: anisotropy, crystal system, CIF, easy axis",
+    labelOptionalHint:
+      "Fill in what you know. The CIF is stored on the server and linked to this row.",
+    labelEasyAxisLabel: "Easy magnetization axis",
+    labelEasyAxisPh: "e.g. [001], c-axis, in the basal plane…",
+    labelCifLabel: "Structure file (.cif)",
     labelFormulaLabel: "Formula *",
     labelFormulaPh: "Fe3O4, Nd2Fe14B",
     labelTcLabel: "Curie temperature *",
@@ -116,7 +139,12 @@ const translations = {
     labelSourcePh: "e.g., DOI:10.1234/...",
     labelCommentLabel: "Comment",
     labelCommentPh: "Additional notes, measurement conditions, etc.",
-    btnLabel: "Submit annotation",
+    btnLabel: "Save formula data",
+    cifBulkTitle: "Bulk CIF upload",
+    cifBulkHint:
+      "Multiple files without the form above — signed-in users only.",
+    cifBulkFilesHint:
+      "Upload one or many CIFs. For a single formula with T\u2093 and extra fields, use «Data by formula» above.",
     labelStatusIdle: "",
     labelStatusSuccess: "Annotation submitted.",
     labelErrorRequired: "Please provide at least formula and temperature.",
@@ -175,9 +203,19 @@ const els = {
   labelSourceInput: document.getElementById("label-source"),
   labelCommentLabel: document.getElementById("label-comment-label"),
   labelCommentInput: document.getElementById("label-comment"),
+  labelCardHint: document.getElementById("label-card-hint"),
+  labelOptionalSummary: document.getElementById("label-optional-summary"),
+  labelOptionalHint: document.getElementById("label-optional-hint"),
+  labelEasyAxisLabel: document.getElementById("label-easy-axis-label"),
+  labelEasyAxisInput: document.getElementById("label-easy-axis"),
+  labelCifLabel: document.getElementById("label-cif-label"),
+  labelCifInput: document.getElementById("label-cif"),
   labelStatus: document.getElementById("label-status"),
   labelError: document.getElementById("label-error"),
   labelButton: document.getElementById("btn-label"),
+  cifBulkTitle: document.getElementById("cif-bulk-title"),
+  cifBulkHint: document.getElementById("cif-bulk-hint"),
+  cifBulkFilesHint: document.getElementById("cif-bulk-files-hint"),
 
   themeToggle: document.getElementById("theme-toggle"),
 
@@ -277,6 +315,14 @@ function applyTranslations() {
 
   // label form texts
   if (els.labelCardTitle) els.labelCardTitle.textContent = t.labelCardTitle;
+  if (els.labelCardHint) {
+    els.labelCardHint.innerHTML = t.labelCardHint.replace(
+      /T\u2093/g,
+      "T<sub>C</sub>"
+    );
+  }
+  if (els.labelOptionalSummary) els.labelOptionalSummary.textContent = t.labelOptionalSummary;
+  if (els.labelOptionalHint) els.labelOptionalHint.textContent = t.labelOptionalHint;
   if (els.labelFormulaLabel)
     els.labelFormulaLabel.textContent = t.labelFormulaLabel;
   if (els.labelFormulaInput)
@@ -286,9 +332,17 @@ function applyTranslations() {
   if (els.labelTcUnitLabel)
     els.labelTcUnitLabel.textContent = t.labelTcUnitLabel;
   if (els.labelAnisoLabel)
-    els.labelAnisoLabel.textContent = t.labelAnisoLabel;
+    els.labelAnisoLabel.innerHTML = t.labelAnisoLabel.replace(
+      /K_a/g,
+      "K<sub>a</sub>"
+    );
   if (els.labelAnisoInput)
     els.labelAnisoInput.placeholder = t.labelAnisoPh;
+  if (els.labelEasyAxisLabel)
+    els.labelEasyAxisLabel.textContent = t.labelEasyAxisLabel;
+  if (els.labelEasyAxisInput)
+    els.labelEasyAxisInput.placeholder = t.labelEasyAxisPh;
+  if (els.labelCifLabel) els.labelCifLabel.textContent = t.labelCifLabel;
   if (els.labelSynLabel) els.labelSynLabel.textContent = t.labelSynLabel;
   if (els.labelSourceLabel)
     els.labelSourceLabel.textContent = t.labelSourceLabel;
@@ -299,6 +353,14 @@ function applyTranslations() {
   if (els.labelCommentInput)
     els.labelCommentInput.placeholder = t.labelCommentPh;
   if (els.labelButton) els.labelButton.textContent = t.btnLabel;
+  if (els.cifBulkTitle) els.cifBulkTitle.textContent = t.cifBulkTitle;
+  if (els.cifBulkHint) els.cifBulkHint.textContent = t.cifBulkHint;
+  if (els.cifBulkFilesHint) {
+    els.cifBulkFilesHint.innerHTML = t.cifBulkFilesHint.replace(
+      /T\u2093/g,
+      "T<sub>C</sub>"
+    );
+  }
   if (els.labelStatus) els.labelStatus.textContent = t.labelStatusIdle;
   if (els.labelError) els.labelError.textContent = "";
 
@@ -543,10 +605,13 @@ if (els.labelButton) {
 
     const formula = els.labelFormulaInput?.value?.trim() ?? "";
     const tcRaw = els.labelTcInput?.value?.trim() ?? "";
-    const tcUnit = (els.labelTcUnitSelect?.value === "C" ? "C" : "K");
+    const tcUnit = els.labelTcUnitSelect?.value === "C" ? "C" : "K";
     const synagonia = els.labelSynSelect?.value?.trim() || undefined;
     const source = els.labelSourceInput?.value?.trim() || undefined;
     const comment = els.labelCommentInput?.value?.trim() || undefined;
+    const anisoRaw = els.labelAnisoInput?.value?.trim() ?? "";
+    const easyAxis = els.labelEasyAxisInput?.value?.trim() || undefined;
+    const cifFile = els.labelCifInput?.files?.[0] ?? null;
 
     if (!formula) {
       if (els.labelError) els.labelError.textContent = t.labelErrorRequired;
@@ -562,17 +627,23 @@ if (els.labelButton) {
     if (els.labelStatus) els.labelStatus.textContent = t.statusLoading;
 
     try {
+      const fd = new FormData();
+      fd.append("formula", formula);
+      fd.append("tcValue", String(tcNum));
+      fd.append("tcUnit", tcUnit);
+      if (synagonia) fd.append("synagonia", synagonia);
+      if (source) fd.append("source", source);
+      if (comment) fd.append("comment", comment);
+      if (anisoRaw !== "") {
+        const a = parseFloat(anisoRaw);
+        if (Number.isFinite(a)) fd.append("anisotropy", String(a));
+      }
+      if (easyAxis) fd.append("easyAxis", easyAxis);
+      if (cifFile) fd.append("cif", cifFile, cifFile.name);
+
       const res = await fetch(labelApiUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          formula,
-          tcValue: tcNum,
-          tcUnit,
-          synagonia,
-          source,
-          comment
-        })
+        body: fd
       });
       const data = await res.json().catch(() => ({}));
 
@@ -581,9 +652,11 @@ if (els.labelButton) {
         if (els.labelFormulaInput) els.labelFormulaInput.value = "";
         if (els.labelTcInput) els.labelTcInput.value = "";
         if (els.labelAnisoInput) els.labelAnisoInput.value = "";
+        if (els.labelEasyAxisInput) els.labelEasyAxisInput.value = "";
         if (els.labelSynSelect) els.labelSynSelect.selectedIndex = 0;
         if (els.labelSourceInput) els.labelSourceInput.value = "";
         if (els.labelCommentInput) els.labelCommentInput.value = "";
+        if (els.labelCifInput) els.labelCifInput.value = "";
       } else {
         if (els.labelError) els.labelError.textContent = data.error || t.labelErrorRequest;
       }

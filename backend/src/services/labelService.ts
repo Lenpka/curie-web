@@ -5,14 +5,28 @@ export interface RawLabelPayload {
   tcValue: number;
   tcUnit: "K" | "C";
   synagonia?: string;
+  /** K_a, МДж/м³ */
+  anisotropyMJm3?: number;
+  easyAxis?: string;
+  cifStoredName?: string;
   source?: string;
   comment?: string;
   clientIp?: string;
 }
 
 export function saveUserLabel(payload: RawLabelPayload): void {
-  const { formula, tcValue, tcUnit, synagonia, source, comment, clientIp } =
-    payload;
+  const {
+    formula,
+    tcValue,
+    tcUnit,
+    synagonia,
+    anisotropyMJm3,
+    easyAxis,
+    cifStoredName,
+    source,
+    comment,
+    clientIp
+  } = payload;
 
   const curieTcK = tcUnit === "K" ? tcValue : tcValue + 273.15;
   const createdAt = new Date().toISOString();
@@ -21,10 +35,12 @@ export function saveUserLabel(payload: RawLabelPayload): void {
     formula: formula.trim(),
     curieTcK,
     synagonia,
+    anisotropyMJm3,
+    easyAxis: easyAxis?.trim() || undefined,
+    cifStoredName,
     source,
     comment,
     createdAt,
     clientIp
   });
 }
-
