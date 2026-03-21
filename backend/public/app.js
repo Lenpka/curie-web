@@ -28,7 +28,7 @@ const translations = {
     // LABEL FORM (RU)
     labelCardTitle: "Данные по формуле",
     labelCardHint:
-      "Обязательны формула и T\u2093. Остальное — по желанию, в блоке ниже.",
+      "Обязательна только формула. T\u2093 и остальные поля — по желанию.",
     labelOptionalSummary:
       "Дополнительно: тип структуры, анизотропия, сингония, CIF, ось",
     labelOptionalHint:
@@ -40,7 +40,7 @@ const translations = {
     labelCifLabel: "Файл структуры (.cif)",
     labelFormulaLabel: "Формула *",
     labelFormulaPh: "Fe3O4, Nd2Fe14B",
-    labelTcLabel: "Температура Кюри *",
+    labelTcLabel: "Температура Кюри",
     labelTcPh: "Например, 785",
     labelTcUnitLabel: "Единицы",
     labelAnisoLabel: "Константа анизотропии K_a (МДж/м³)",
@@ -66,10 +66,10 @@ const translations = {
     cifBulkHint:
       "Несколько файлов без формы выше — только для зарегистрированных пользователей (нужна авторизация).",
     cifBulkFilesHint:
-      "Можно загрузить один или несколько CIF. Для одной формулы с T\u2093 и полями выше удобнее форма «Данные по формуле».",
+      "Можно загрузить один или несколько CIF. Для одной формулы с полной карточкой удобнее форма «Данные по формуле».",
     labelStatusIdle: "",
     labelStatusSuccess: "Разметка отправлена.",
-    labelErrorRequired: "Укажите хотя бы формулу и температуру.",
+    labelErrorRequired: "Укажите формулу.",
     labelErrorRequest: "Не удалось сохранить разметку.",
 
     // CLASSIFY FORM (RU)
@@ -111,7 +111,7 @@ const translations = {
     // LABEL FORM (EN)
     labelCardTitle: "Data by formula",
     labelCardHint:
-      "Formula and T\u2093 are required. Everything else is optional (expand below).",
+      "Only the formula is required. T\u2093 and other fields are optional.",
     labelOptionalSummary:
       "Optional: structure type, anisotropy, crystal system, CIF, easy axis",
     labelOptionalHint:
@@ -123,7 +123,7 @@ const translations = {
     labelCifLabel: "Structure file (.cif)",
     labelFormulaLabel: "Formula *",
     labelFormulaPh: "Fe3O4, Nd2Fe14B",
-    labelTcLabel: "Curie temperature *",
+    labelTcLabel: "Curie temperature",
     labelTcPh: "e.g., 785",
     labelTcUnitLabel: "Units",
     labelAnisoLabel: "Anisotropy constant (MJ/m³)",
@@ -148,10 +148,10 @@ const translations = {
     cifBulkHint:
       "Multiple files without the form above — signed-in users only.",
     cifBulkFilesHint:
-      "Upload one or many CIFs. For a single formula with T\u2093 and extra fields, use «Data by formula» above.",
+      "Upload one or many CIFs. For a full per-formula card, use «Data by formula» above.",
     labelStatusIdle: "",
     labelStatusSuccess: "Annotation submitted.",
-    labelErrorRequired: "Please provide at least formula and temperature.",
+    labelErrorRequired: "Please enter a formula.",
     labelErrorRequest: "Failed to save annotation.",
 
     // CLASSIFY FORM (EN)
@@ -617,6 +617,8 @@ if (els.labelButton) {
     const formula = els.labelFormulaInput?.value?.trim() ?? "";
     const tcRaw = els.labelTcInput?.value?.trim() ?? "";
     const tcUnit = els.labelTcUnitSelect?.value === "C" ? "C" : "K";
+    const tcNum =
+      tcRaw !== "" && Number.isFinite(parseFloat(tcRaw)) ? parseFloat(tcRaw) : undefined;
     const structureType = els.labelStructureInput?.value?.trim() || undefined;
     const synagonia = els.labelSynSelect?.value?.trim() || undefined;
     const source = els.labelSourceInput?.value?.trim() || undefined;
@@ -629,11 +631,6 @@ if (els.labelButton) {
       if (els.labelError) els.labelError.textContent = t.labelErrorRequired;
       return;
     }
-    const tcNum = parseFloat(tcRaw);
-    if (!Number.isFinite(tcNum) || tcNum < 0) {
-      if (els.labelError) els.labelError.textContent = t.labelErrorRequired;
-      return;
-    }
 
     els.labelButton.disabled = true;
     if (els.labelStatus) els.labelStatus.textContent = t.statusLoading;
@@ -641,8 +638,10 @@ if (els.labelButton) {
     try {
       const fd = new FormData();
       fd.append("formula", formula);
-      fd.append("tcValue", String(tcNum));
-      fd.append("tcUnit", tcUnit);
+      if (tcNum !== undefined) {
+        fd.append("tcValue", String(tcNum));
+        fd.append("tcUnit", tcUnit);
+      }
       if (structureType) fd.append("structureType", structureType);
       if (synagonia) fd.append("synagonia", synagonia);
       if (source) fd.append("source", source);

@@ -28,7 +28,8 @@ export type MagneticClass = (typeof MAGNETIC_CLASSES)[number];
 
 export interface UserLabelRecord {
   formula: string;
-  curieTcK: number;
+  /** K; пусто в CSV, если не указано */
+  curieTcK?: number;
   /** Семейство структуры по справочнику (NiAs-type, pyrite-structure …) */
   structureType?: string;
   synagonia?: string;
@@ -143,10 +144,14 @@ export function appendUserLabel(record: UserLabelRecord): void {
     record.anisotropyMJm3 != null && Number.isFinite(record.anisotropyMJm3)
       ? record.anisotropyMJm3.toFixed(6)
       : "";
+  const tcCell =
+    record.curieTcK != null && Number.isFinite(record.curieTcK)
+      ? record.curieTcK.toFixed(2)
+      : "";
   const line =
     [
       csvEscapeCell(record.formula),
-      csvEscapeCell(record.curieTcK.toFixed(2)),
+      csvEscapeCell(tcCell),
       csvEscapeCell(record.structureType ?? ""),
       csvEscapeCell(record.synagonia ?? ""),
       csvEscapeCell(aniso),
@@ -187,9 +192,13 @@ export function readUserLabels(): UserLabelRecord[] {
     const parts = parseCsvLine(lines[i]);
     if (isNew) {
       const anisoRaw = g(parts, "anisotropy_MJm3");
+      const tcStr = g(parts, "Curie_TC_K");
       records.push({
         formula: g(parts, "formula"),
-        curieTcK: Number(g(parts, "Curie_TC_K")) || 0,
+        curieTcK:
+          tcStr !== "" && Number.isFinite(Number(tcStr))
+            ? Number(tcStr)
+            : undefined,
         structureType: g(parts, "structure_type") || undefined,
         synagonia: g(parts, "synagonia") || undefined,
         anisotropyMJm3:
@@ -204,9 +213,13 @@ export function readUserLabels(): UserLabelRecord[] {
         clientIp: g(parts, "client_ip") || undefined
       });
     } else if (parts.length >= 7) {
+      const legTc = parts[1]?.trim() ?? "";
       records.push({
         formula: parts[0],
-        curieTcK: Number(parts[1]) || 0,
+        curieTcK:
+          legTc !== "" && Number.isFinite(Number(legTc))
+            ? Number(legTc)
+            : undefined,
         synagonia: parts[2] || undefined,
         source: parts[3] || undefined,
         comment: parts[4] || undefined,

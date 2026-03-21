@@ -412,11 +412,11 @@
 
 
 
-    <!-- LABEL CARD: данные по формуле (T_C + опционально сингония, CIF, K_a, ось) -->
+    <!-- LABEL CARD: данные по формуле (обязательна формула; T_C и остальное — по желанию) -->
     <div class="card">
       <h2 id="label-card-title">Данные по формуле</h2>
       <p class="hint" id="label-card-hint" style="margin-top: -8px; margin-bottom: 16px;">
-        Обязательны формула и T<sub>C</sub>. Остальное — по желанию, в блоке ниже.
+        Обязательна только <strong>формула</strong>. T<sub>C</sub> и поля ниже — по желанию.
       </p>
 
       <div class="form-group">
@@ -426,7 +426,7 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label id="label-tc-label" for="label-tc-value">Температура Кюри *</label>
+          <label id="label-tc-label" for="label-tc-value">Температура Кюри</label>
           <input
             id="label-tc-value"
             type="number"

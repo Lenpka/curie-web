@@ -2,8 +2,8 @@ import { appendUserLabel } from "../db/fileStorage";
 
 export interface RawLabelPayload {
   formula: string;
-  tcValue: number;
-  tcUnit: "K" | "C";
+  tcValue?: number;
+  tcUnit?: "K" | "C";
   /** Семейство структуры (NiAs-type, pyrite-structure disulphides, …) */
   structureType?: string;
   synagonia?: string;
@@ -31,7 +31,11 @@ export function saveUserLabel(payload: RawLabelPayload): void {
     clientIp
   } = payload;
 
-  const curieTcK = tcUnit === "K" ? tcValue : tcValue + 273.15;
+  let curieTcK: number | undefined;
+  if (tcValue != null && Number.isFinite(tcValue)) {
+    const unit = tcUnit === "C" ? "C" : "K";
+    curieTcK = unit === "K" ? tcValue : tcValue + 273.15;
+  }
   const createdAt = new Date().toISOString();
 
   appendUserLabel({

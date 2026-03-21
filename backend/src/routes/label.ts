@@ -22,7 +22,7 @@ function parseOptionalNumber(v: unknown): number | undefined {
 
 function parseLabelBody(req: Request): {
   formula: string;
-  tcValue: number;
+  tcValue?: number;
   tcUnit: "K" | "C";
   structureType?: string;
   synagonia?: string;
@@ -32,11 +32,10 @@ function parseLabelBody(req: Request): {
   comment?: string;
   cifFile?: Express.Multer.File;
 } {
-  const multipart = req.is("multipart/form-data");
   const b = req.body;
 
   const formula = typeof b.formula === "string" ? b.formula : String(b.formula ?? "");
-  const tcRaw = multipart ? parseFloat(String(b.tcValue ?? "")) : Number(b.tcValue);
+  const tcValue = parseOptionalNumber(b.tcValue);
   const tcUnit = b.tcUnit === "C" ? "C" : "K";
   const structureType =
     typeof b.structureType === "string" && b.structureType.trim()
@@ -62,8 +61,9 @@ function parseLabelBody(req: Request): {
 
   return {
     formula,
-    tcValue: tcRaw,
+    tcValue,
     tcUnit,
+    structureType,
     synagonia,
     anisotropyMJm3,
     easyAxis,
@@ -84,7 +84,11 @@ export function registerLabelRoute(router: Router): void {
         const rows = labels.map((r) =>
           [
             csvEscapeCell(r.formula),
-            csvEscapeCell(r.curieTcK.toFixed(2)),
+            csvEscapeCell(
+              r.curieTcK != null && Number.isFinite(r.curieTcK)
+                ? r.curieTcK.toFixed(2)
+                : ""
+            ),
             csvEscapeCell(r.structureType ?? ""),
             csvEscapeCell(r.synagonia ?? ""),
             csvEscapeCell(
@@ -144,10 +148,10 @@ export function registerLabelRoute(router: Router): void {
       if (typeof formula !== "string" || !formula.trim()) {
         return res.status(400).json({ error: "Field 'formula' is required" });
       }
-      if (typeof tcValue !== "number" || !Number.isFinite(tcValue)) {
-        return res.status(400).json({ error: "Field 'tcValue' must be a number" });
+      if (tcValue !== undefined && !Number.isFinite(tcValue)) {
+        return res.status(400).json({ error: "Field 'tcValue' must be a valid number when provided" });
       }
-      if (tcUnit !== "K" && tcUnit !== "C") {
+      if (tcValue !== undefined && tcUnit !== "K" && tcUnit !== "C") {
         return res.status(400).json({ error: "Field 'tcUnit' must be 'K' or 'C'" });
       }
 
