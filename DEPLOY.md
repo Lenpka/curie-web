@@ -23,7 +23,8 @@
 3. **Файлы моделей**  
    - **CrabNet:** `model_service/weights/UnnamedModel.pth` — должен попасть в образ (уже под `COPY model_service/`).  
    - **RandomForest:** `curie_model.joblib` и `curie_scaler.joblib` в **корне репозитория** (рядом с `train_curie_three_versions.py`). Если файлов нет — RF вернёт 503; CrabNet работает.  
-   - Если pickle sklearn несовместим — переобучите RF или используйте то же окружение sklearn, что при сохранении.
+   - Если pickle sklearn несовместим — переобучите RF или используйте то же окружение sklearn, что при сохранении.  
+     Для этого при сборке Docker-образа model-service используйте `USE_LEGACY_SKLEARN=1` (sklearn==1.0.2).
 
 4. **База данных**  
    - Полный функционал (логин, разметка): поднимите Postgres, **не** ставьте `SKIP_DB=1`, задайте `DATABASE_URL`.  
@@ -50,6 +51,14 @@ docker compose up --build
 ```
 
 Откройте http://localhost:3000 — API предсказаний проксируется на сервис моделей.
+
+Перед `docker compose up` положите в корень репозитория файлы:
+- `curie_model.joblib`
+- `curie_scaler.joblib`
+
+В `docker-compose.yml` они монтируются в model-service как:
+- `/app/curie_model.joblib`
+- `/app/curie_scaler.joblib`
 
 ### Облако (Railway / Render / VPS)
 

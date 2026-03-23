@@ -9,11 +9,28 @@ services:
     build:
       context: .
       dockerfile: docker/model-service.Dockerfile
+      args:
+        USE_LEGACY_SKLEARN: "1"
+        PYTHON_VERSION: "3.10-slim"
     ports:
       - "8001:8001"
     environment:
       CRABNET_WEIGHTS_PATH: /app/model_service/weights/UnnamedModel.pth
       CRABNET_FORCE_CPU: "1"
+    volumes:
+      # RandomForest артефакты (обязательно для model=rf)
+      - type: bind
+        source: ./curie_model.joblib
+        target: /app/curie_model.joblib
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./curie_scaler.joblib
+        target: /app/curie_scaler.joblib
+        read_only: true
+        bind:
+          create_host_path: false
 
   backend:
     build:

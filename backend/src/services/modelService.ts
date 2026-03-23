@@ -16,7 +16,7 @@ export async function predictCurieTemperature(
 ): Promise<PredictResult[]> {
   const url = `${config.modelServiceUrl}/predict`;
   try{
-    const response = await axios.post(url, { formulas, model });
+    const response = await axios.post(url, { formulas, model }, { timeout: 90000 });
     return response.data.results as PredictResult[];
 
   }

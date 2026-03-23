@@ -46,6 +46,40 @@ def health() -> dict:
 def health_head() -> dict:
     return {"status": "ok"}
 
+@app.get("/debug/versions")
+def debug_versions() -> dict:
+    """Техническая точка для проверки версий библиотек (нужно для RF/sklearn pickle)."""
+    import platform
+
+    out = {"python": platform.python_version()}
+    try:
+        import sklearn
+
+        out["sklearn"] = sklearn.__version__
+    except Exception:
+        out["sklearn"] = None
+
+    try:
+        import torch
+
+        out["torch"] = torch.__version__
+    except Exception:
+        out["torch"] = None
+
+    return out
+
+
+@app.on_event("startup")
+def warmup_crabnet() -> None:
+    """
+    Прогреваем CrabNet в фоне, чтобы первый запрос не занимал минуту (torch + weights).
+    RandomForest при несовместимости sklearn всё равно не грузим на старте.
+    """
+    import threading
+
+    t = threading.Thread(target=crabnet_model_service.warmup, daemon=True)
+    t.start()
+
 @app.post("/predict", response_model=PredictResponse)
 def predict(request: PredictRequest) -> PredictResponse:
     """

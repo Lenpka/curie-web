@@ -79,6 +79,10 @@ class CrabNetModelService:
     def __init__(self) -> None:
         self._cb = None
 
+    def warmup(self) -> None:
+        """Прогрев: загрузить torch-модель и веса заранее, чтобы первый /predict не был долгим."""
+        self._ensure()
+
     def _ensure(self):
         if self._cb is not None:
             return self._cb

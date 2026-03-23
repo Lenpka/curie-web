@@ -10,7 +10,7 @@ const config_1 = require("../config");
 async function predictCurieTemperature(formulas, model = "rf") {
     const url = `${config_1.config.modelServiceUrl}/predict`;
     try {
-        const response = await axios_1.default.post(url, { formulas, model });
+        const response = await axios_1.default.post(url, { formulas, model }, { timeout: 90000 });
         return response.data.results;
     }
     catch (err) {

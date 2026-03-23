@@ -17,6 +17,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
+# torch отдельной командой (CPU-only), чтобы не тянуть не тот wheel и не ловить таймауты
+ENV PIP_DEFAULT_TIMEOUT=300
+ENV PIP_RETRIES=10
+
+RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch
+
 ARG USE_LEGACY_SKLEARN=0
 
 COPY train_curie_three_versions.py /app/train_curie_three_versions.py
