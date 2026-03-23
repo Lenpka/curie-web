@@ -1,0 +1,40 @@
+# Локальный прод-подобный запуск: docker compose up --build
+# Бэкенд: http://localhost:3000  |  Модели: http://localhost:8001
+#
+# Перед первым запуском положите model_service/weights/UnnamedModel.pth (CrabNet).
+# Для RandomForest добавьте в корень curie_model.joblib и curie_scaler.joblib или монтируйте том.
+
+services:
+  model:
+    build:
+      context: .
+      dockerfile: docker/model-service.Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      CRABNET_WEIGHTS_PATH: /app/model_service/weights/UnnamedModel.pth
+      CRABNET_FORCE_CPU: "1"
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      MODEL_SERVICE_URL: http://model:8001
+      SKIP_DB: "1"
+      SESSION_SECRET: ${SESSION_SECRET:-change-me-in-production}
+    depends_on:
+      - model
+
+  # Раскомментируйте для полного стека с БД (уберите SKIP_DB у backend, задайте DATABASE_URL)
+  # db:
+  #   image: postgres:16-alpine
+  #   environment:
+  #     POSTGRES_USER: app
+  #     POSTGRES_PASSWORD: app
+  #     POSTGRES_DB: curie
+  #   ports:
+  #     - "5432:5432"

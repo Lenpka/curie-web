@@ -13,7 +13,9 @@ const translations = {
     labelFormulas: "Формулы",
     hint:
       "Одна формула на строку. Пустые строки и строки, начинающиеся с #, игнорируются.",
-    btnPredict: "Предсказать T\u2093",
+    labelModelPick: "Модель",
+    btnPredictRf: "RandomForest",
+    btnPredictCrabnet: "CrabNet",
     thFormula: "Формула",
     thTcK: "T\u2093 (K)",
     thTcC: "T\u2093 (\u00b0C)",
@@ -22,6 +24,8 @@ const translations = {
     statusDone: (n) => `Получено ${n} предсказаний`,
     errorNoFormulas: "Введите хотя бы одну формулу.",
     errorRequest: "Ошибка запроса. Проверьте, что backend запущен.",
+    errorCrabnet503: "CrabNet недоступен: проверьте веса и зависимости на Python-сервисе.",
+    errorModel503: "Сервис модели (503). Подробности ниже.",
     errorInvalidFormula: "Формула «{formula}» не распознана.",
     errorSuggestion: "Возможно, вы имели в виду: {suggestion}",
 
@@ -45,6 +49,8 @@ const translations = {
     labelTcUnitLabel: "Единицы",
     labelAnisoLabel: "Константа анизотропии K_a (МДж/м³)",
     labelAnisoPh: "Например, 0.85",
+    labelAnisoHint:
+      "В справочниках (табл. 11.1 и др.) K\u2081 часто в кДж/м³: значение в МДж/м³ = (кДж/м³) \u00f7 1000. Допускаются отрицательные K\u2081.",
     labelSynLabel: "Сингония (необязательно)",
     synOptions: [
       "— не указано —",
@@ -96,7 +102,9 @@ const translations = {
     labelFormulas: "Formulas",
     hint:
       "One formula per line. Empty lines and lines starting with # are ignored.",
-    btnPredict: "Predict T\u2093",
+    labelModelPick: "Model",
+    btnPredictRf: "RandomForest",
+    btnPredictCrabnet: "CrabNet",
     thFormula: "Formula",
     thTcK: "T\u2093 (K)",
     thTcC: "T\u2093 (\u00b0C)",
@@ -105,6 +113,8 @@ const translations = {
     statusDone: (n) => `Received ${n} predictions`,
     errorNoFormulas: "Enter at least one formula.",
     errorRequest: "Request error. Check that backend is running.",
+    errorCrabnet503: "CrabNet unavailable: check weights and Python service dependencies.",
+    errorModel503: "Model service returned 503. Details below.",
     errorInvalidFormula: "Formula «{formula}» was not recognized.",
     errorSuggestion: "Did you mean: {suggestion}",
 
@@ -181,7 +191,9 @@ const els = {
   subtitle: document.getElementById("subtitle-text"),
   labelFormulas: document.getElementById("label-formulas"),
   hint: document.getElementById("hint-text"),
-  btnPredict: document.getElementById("btn-predict"),
+  labelModelPick: document.getElementById("label-model-pick"),
+  btnPredictRf: document.getElementById("btn-predict-rf"),
+  btnPredictCrabnet: document.getElementById("btn-predict-crabnet"),
   thFormula: document.getElementById("th-formula"),
   thTcK: document.getElementById("th-tc-k"),
   thTcC: document.getElementById("th-tc-c"),
@@ -201,6 +213,7 @@ const els = {
   labelTcUnitSelect: document.getElementById("label-tc-unit"),
   labelAnisoLabel: document.getElementById("label-aniso-label"),
   labelAnisoInput: document.getElementById("label-aniso"),
+  labelAnisoHint: document.getElementById("label-aniso-hint"),
   labelStructureLabel: document.getElementById("label-structure-label"),
   labelStructureInput: document.getElementById("label-structure-type"),
   labelSynLabel: document.getElementById("label-syn-label"),
@@ -306,11 +319,9 @@ function applyTranslations() {
   if (els.subtitle) els.subtitle.textContent = t.subtitle;
   if (els.labelFormulas) els.labelFormulas.textContent = t.labelFormulas;
   if (els.hint) els.hint.textContent = t.hint;
-  if (els.btnPredict)
-    els.btnPredict.innerHTML = t.btnPredict.replace(
-      "T\u2093",
-      "T<sub>C</sub>"
-    );
+  if (els.labelModelPick) els.labelModelPick.textContent = t.labelModelPick;
+  if (els.btnPredictRf) els.btnPredictRf.textContent = t.btnPredictRf;
+  if (els.btnPredictCrabnet) els.btnPredictCrabnet.textContent = t.btnPredictCrabnet;
   if (els.thFormula) els.thFormula.textContent = t.thFormula;
   if (els.thTcK)
     els.thTcK.innerHTML = t.thTcK.replace("T\u2093", "T<sub>C</sub>");
@@ -349,6 +360,8 @@ function applyTranslations() {
     );
   if (els.labelAnisoInput)
     els.labelAnisoInput.placeholder = t.labelAnisoPh;
+  if (els.labelAnisoHint && t.labelAnisoHint)
+    els.labelAnisoHint.textContent = t.labelAnisoHint;
   if (els.labelEasyAxisLabel)
     els.labelEasyAxisLabel.textContent = t.labelEasyAxisLabel;
   if (els.labelEasyAxisInput)
@@ -521,8 +534,9 @@ if (els.themeToggle) {
   }
 })();
 
-if (els.btnPredict) {
-  els.btnPredict.addEventListener("click", async () => {
+function wirePredictButton(btn, model) {
+  if (!btn) return;
+  btn.addEventListener("click", async () => {
     const t = translations[currentLang];
     if (els.error) els.error.textContent = "";
     if (els.status) els.status.textContent = "";
@@ -539,18 +553,18 @@ if (els.btnPredict) {
       return;
     }
 
-    if (els.btnPredict) els.btnPredict.disabled = true;
+    if (els.btnPredictRf) els.btnPredictRf.disabled = true;
+    if (els.btnPredictCrabnet) els.btnPredictCrabnet.disabled = true;
     if (els.status) els.status.textContent = t.statusLoading;
 
     try {
       const res = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ formulas: lines })
+        body: JSON.stringify({ formulas: lines, model })
       });
       const data = await res.json().catch(() => ({}));
 
-      // Обработка ошибки если сервер отвечает
       if (!res.ok) {
         if (data.code === "invalid_formula") {
           let msg = t.errorInvalidFormula.replace("{formula}", data.formula || "?");
@@ -560,8 +574,23 @@ if (els.btnPredict) {
             msg += " " + data.message;
           }
           if (els.error) els.error.textContent = msg;
+        } else if (res.status === 503) {
+          const inner = data.details?.detail ?? data.detail;
+          const msg =
+            inner && typeof inner === "object" && inner.message ? inner.message : "";
+          const prefix =
+            inner?.code === "crabnet_weights_missing" || inner?.code === "crabnet_dependency"
+              ? t.errorCrabnet503
+              : t.errorModel503;
+          if (els.error) {
+            els.error.textContent = msg ? `${prefix} ${msg}` : prefix;
+          }
         } else if (data.error === "Model service error") {
-          if (els.error) els.error.textContent = (data.details?.detail?.message) || t.errorRequest;
+          const d = data.details?.detail;
+          if (els.error) {
+            els.error.textContent =
+              (typeof d === "object" && d?.message) || (typeof d === "string" ? d : "") || t.errorRequest;
+          }
         } else if (data.error === "Model service unavailable") {
           if (els.error) els.error.textContent = t.errorRequest;
         } else {
@@ -601,10 +630,14 @@ if (els.btnPredict) {
       console.error(e);
       if (els.error) els.error.textContent = t.errorRequest;
     } finally {
-      if (els.btnPredict) els.btnPredict.disabled = false;
+      if (els.btnPredictRf) els.btnPredictRf.disabled = false;
+      if (els.btnPredictCrabnet) els.btnPredictCrabnet.disabled = false;
     }
   });
 }
+
+wirePredictButton(els.btnPredictRf, "rf");
+wirePredictButton(els.btnPredictCrabnet, "crabnet");
 
 // Разметка: POST /api/label → backend сохраняет в data/user_labels.csv
 const labelApiUrl = "/api/label";

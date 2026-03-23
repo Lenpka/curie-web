@@ -7,13 +7,16 @@ export interface PredictResult {
   Tc_C: number;
 }
 
+export type PredictModelBackend = "rf" | "crabnet";
+
 // Вызывает Python-сервис модели и возвращает список предсказаний
 export async function predictCurieTemperature(
-  formulas: string[]
+  formulas: string[],
+  model: PredictModelBackend = "rf"
 ): Promise<PredictResult[]> {
   const url = `${config.modelServiceUrl}/predict`;
   try{
-    const response = await axios.post(url, {formulas});
+    const response = await axios.post(url, { formulas, model });
     return response.data.results as PredictResult[];
 
   }

@@ -4,7 +4,8 @@ import { predictCurieTemperature } from "../services/modelService";
 
 export function registerPredictRoute(router: Router): void {
   router.post("/predict", async (req: Request, res: Response) => {
-    const { formulas } = req.body as { formulas?: unknown };
+    const { formulas, model } = req.body as { formulas?: unknown; model?: unknown };
+    const backend = model === "crabnet" ? "crabnet" : "rf";
 
     if (!Array.isArray(formulas) || formulas.length === 0) {
       return res
@@ -22,8 +23,8 @@ export function registerPredictRoute(router: Router): void {
     }
 
     try {
-      const results = await predictCurieTemperature(cleaned);
-      return res.json({ results });
+      const results = await predictCurieTemperature(cleaned, backend);
+      return res.json({ results, model: backend });
     } catch (err: unknown) {
       const e = err as { type?: string; status?: number; data?: unknown };
       if (e?.type === "MODEL_RESPONSE_ERROR") {

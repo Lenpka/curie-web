@@ -1,0 +1,63 @@
+formula,Curie_TC_K,structure_type,synagonia,anisotropy_MJm3,easy_axis,cif_stored_name,source,comment,created_at,client_ip
+Fe3O4,785.00,,кубическая,,,,тест,ручная разметка,2026-03-09T17:44:03.045Z,::ffff:127.0.0.1
+Ni80Fe20,,,,0.000148,,,,,2026-03-21T16:34:30.408Z,::1
+Fe,,,,0.479997,,,,,2026-03-21T16:34:49.276Z,::1
+Co,,,,0.409998,,,,,2026-03-21T16:35:12.996Z,::1
+CoPt,,,,4.900000,,,,,2026-03-21T16:35:35.563Z,::1
+Nd2Fe14B,,,,4.900000,,,,,2026-03-21T16:35:54.162Z,::1
+SmCo5,,,,17.200000,,,,,2026-03-21T16:36:07.407Z,::1
+CrO2,,,,0.025000,,,,,2026-03-21T16:36:23.914Z,::1
+Fe3O4,,,,-0.013000,,,,,2026-03-21T16:36:39.987Z,::1
+BaFe12O19,,,,0.330000,,,,,2026-03-21T16:36:55.821Z,::1
+Fe,1044,,кубическая,0.048,,,Table 11.1 Selected magnetic materials,T11.1 f 3d m0=2.22_muB/fu mu0Ms=2.15T ex=+,2026-03-22T12:00:00.000Z,manual-import
+Fe0.65Co0.35,1210,,кубическая,0.018,,,Table 11.1 Selected magnetic materials,T11.1 f 3d m0=2.46 mu0Ms=2.45T,2026-03-22T12:00:00.000Z,manual-import
+Fe0.20Ni0.80,843,,кубическая,-0.002,,,Table 11.1 Selected magnetic materials,T11.1 f 3d m0=1.02 mu0Ms=1.04T,2026-03-22T12:00:00.000Z,manual-import
+a-Fe40Ni40B20,535,,,0,,,Table 11.1 Selected magnetic materials,T11.1 amorphous f 3d m0=0.90 mu0Ms=0.82T K1~0,2026-03-22T12:00:00.000Z,manual-import
+Co,1360,,гексагональная,0.41,,,Table 11.1 Selected magnetic materials,T11.1 f 3d m0=1.71 mu0Ms=1.81T,2026-03-22T12:00:00.000Z,manual-import
+CoPt,840,,тетрагональная,4.9,,,Table 11.1 Selected magnetic materials,T11.1 f 3d m0=2.35 mu0Ms=1.01T,2026-03-22T12:00:00.000Z,manual-import
+MnBi,633,,гексагональная,0.9,,,Table 11.1 Selected magnetic materials,T11.1 f 3d m0=3.12 mu0Ms=0.73T,2026-03-22T12:00:00.000Z,manual-import
+NiMnSb,730,,кубическая,0.013,,,Table 11.1 Selected magnetic materials,T11.1 f 3d m0=3.92 mu0Ms=0.84T,2026-03-22T12:00:00.000Z,manual-import
+Mn,95,,кубическая,,,,Table 11.1 Selected magnetic materials,T11.1 af 3d m0=0.76 mu0Ms=n.a. K1=n.a.,2026-03-22T12:00:00.000Z,manual-import
+IrMn3,960,,кубическая,,,,Table 11.1 Selected magnetic materials,T11.1 af 3d m0=n.a. K1=n.a.,2026-03-22T12:00:00.000Z,manual-import
+Cr,310,,кубическая,,,,Table 11.1 Selected magnetic materials,T11.1 af 3d m0=0.43 mu0Ms=n.a. K1=n.a.,2026-03-22T12:00:00.000Z,manual-import
+Dy,,,гексагональная,-55,,,Table 11.1 Selected magnetic materials,T11.1 he/f 4f Tc=179K/85K m0=10.4 mu0Ms=3.84T(a) K1=-55000kJ/m3(a),2026-03-22T12:00:00.000Z,manual-import
+SmCo5,1020,,гексагональная,17.2,,,Table 11.1 Selected magnetic materials,T11.1 f 3d+4f m0=8.15 mu0Ms=1.07T,2026-03-22T12:00:00.000Z,manual-import
+Nd2Fe14B,588,,тетрагональная,4.9,,,Table 11.1 Selected magnetic materials,T11.1 f 3d+4f m0=37.7 mu0Ms=1.61T,2026-03-22T12:00:00.000Z,manual-import
+Y2Co17,1167,,гексагональная,-0.34,,,Table 11.1 Selected magnetic materials,T11.1 f 3d m0=26.8 mu0Ms=1.26T,2026-03-22T12:00:00.000Z,manual-import
+TbFe2,698,,кубическая,-6.3,,,Table 11.1 Selected magnetic materials,T11.1 f 3d+4f m0=6.0 mu0Ms=1.10T,2026-03-22T12:00:00.000Z,manual-import
+Gd0.25Co0.75,700,,,0,,,Table 11.1 Selected magnetic materials,T11.1 amorphous fi 3d+4f Tc~700 m0=0.6 mu0Ms=0.10T K1~0,2026-03-22T12:00:00.000Z,manual-import
+Fe4N,769,,кубическая,-0.029,,,Table 11.1 Selected magnetic materials,T11.1 f 3d m0=8.9 mu0Ms=1.89T,2026-03-22T12:00:00.000Z,manual-import
+Sm2Fe17N3,749,,ромбоэдрическая,8.6,,,Table 11.1 Selected magnetic materials,T11.1 f 3d m0=39.0 mu0Ms=1.54T,2026-03-22T12:00:00.000Z,manual-import
+FePt,750,,тетрагональная,6.6,,,Table 11.7 ordered AB alloys,T11.7 L10 Js=1.43T kappa=2.02,2026-03-22T14:00:00.000Z,manual-import
+FePd,749,,тетрагональная,1.8,,,Table 11.7 ordered AB alloys,T11.7 L10 Js=1.38T kappa=1.10,2026-03-22T14:00:00.000Z,manual-import
+MnAl,650,,тетрагональная,1.7,,,Table 11.7 ordered AB alloys,T11.7 tau-L10 Js=0.75T kappa=1.95,2026-03-22T14:00:00.000Z,manual-import
+Co3Pt,1190,,кубическая,0.6,,,Table 11.7 ordered AB alloys,T11.7 L12 Js=1.40T kappa=0.71,2026-03-22T14:00:00.000Z,manual-import
+Ni3Mn,750,,кубическая,0.03,,,Table 11.7 ordered AB alloys,T11.7 L12 Js=1.0T kappa=0.19,2026-03-22T14:00:00.000Z,manual-import
+YCo5,987,,гексагональная,6.5,,,Table 11.12 CaCu5 cobalt-rare-earth,T11.12 a=494pm c=398pm Ms=0.85MAm Ba=15T kappa=2.7,2026-03-22T14:00:00.000Z,manual-import
+GdCo5,1014,,гексагональная,4.6,,,Table 11.12 CaCu5 cobalt-rare-earth,T11.12 a=498pm c=397pm Ms=0.29MAm Ba=32T kappa=6.6,2026-03-22T14:00:00.000Z,manual-import
+SmCo4B,470,,гексагональная,30.2,,,Table 11.12 CaCu5 cobalt-rare-earth,T11.12 a=509pm c=689pm Ms=0.67MAm Ba=90T kappa=7.3,2026-03-22T14:00:00.000Z,manual-import
+Y2Fe17,327,,гексагональная,-0.4,,,Table 11.13 Th2Ni17/Th2Zn17 structure,T11.13 a=848pm c=826pm m=18.6muB/fu Ms=0.48MAm Ba=-1.6T,2026-03-22T14:00:00.000Z,manual-import
+Sm2Fe17,389,,гексагональная,-0.8,,,Table 11.13 Th2Ni17/Th2Zn17 structure,T11.13 a=854pm c=1243pm m=22.4muB/fu Ms=0.80MAm Ba=-2.0T,2026-03-22T14:00:00.000Z,manual-import
+Sm2Co17,1190,,гексагональная,4.2,,,Table 11.13 Th2Ni17/Th2Zn17 structure,T11.13 a=838pm c=1221pm m=22.0muB/fu Ms=0.97MAm Ba=8.5T,2026-03-22T14:00:00.000Z,manual-import
+Gd2Co17,1209,,гексагональная,-0.5,,,Table 11.13 Th2Ni17/Th2Zn17 structure,T11.13 a=837pm c=1218pm m=14.0muB/fu Ms=0.60MAm Ba=-1.7T,2026-03-22T14:00:00.000Z,manual-import
+Y2Fe17N3,694,,гексагональная,-1.1,,,Table 11.17 2:17 interstitial,T11.17 a=865pm c=844pm Ms=1.17MAm,2026-03-22T14:00:00.000Z,manual-import
+Y2Fe17C3,660,,гексагональная,-0.3,,,Table 11.17 2:17 interstitial,T11.17 a=866pm c=840pm Ms=1.00MAm,2026-03-22T14:00:00.000Z,manual-import
+Y2Fe17Hx,475,,гексагональная,-0.4,,,Table 11.17 2:17 interstitial,T11.17 a=852pm c=827pm Ms=0.75MAm hydride,2026-03-22T14:00:00.000Z,manual-import
+Sm2Fe17C3,668,,гексагональная,7.4,,,Table 11.17 2:17 interstitial,T11.17 a=875pm c=1257pm Ms=1.14MAm,2026-03-22T14:00:00.000Z,manual-import
+Sm2Fe17Hx,550,,гексагональная,4.2,,,Table 11.17 2:17 interstitial,T11.17 a=861pm c=1247pm Ms=1.10MAm hydride,2026-03-22T14:00:00.000Z,manual-import
+MgFe2O4,713,,кубическая,-0.003,,,Table 11.23 spinel ferrites RT,K1 from kJ/m3 divided by 1000; a0=836pm Ms=0.18MAm lambda_s=-6e-6 rho=1e5 Ohm m; type I inverse,2026-03-22T14:00:00.000Z,manual-import
+Li0.5Fe2.5O4,943,,кубическая,-0.008,,,Table 11.23 spinel ferrites RT,K1 kJ/m3 to MJ/m3; a0=829pm Ms=0.33MAm lambda=-8e-6 rho=1 Ohm m,2026-03-22T14:00:00.000Z,manual-import
+MnFe2O4,575,,кубическая,-0.003,,,Table 11.23 spinel ferrites RT,K1 kJ/m3 to MJ/m3; a0=852pm Ms=0.50MAm type I,2026-03-22T14:00:00.000Z,manual-import
+CoFe2O4,790,,кубическая,0.29,,,Table 11.23 spinel ferrites RT,K1 290kJ/m3=0.29MJ/m3; a0=839pm Ms=0.45MAm lambda=-110e-6,2026-03-22T14:00:00.000Z,manual-import
+NiFe2O4,865,,кубическая,-0.007,,,Table 11.23 spinel ferrites RT,K1 kJ/m3 to MJ/m3; a0=834pm Ms=0.33MAm lambda=-25e-6 rho=1e2,2026-03-22T14:00:00.000Z,manual-import
+ZnFe2O4,,,кубическая,,,,Table 11.23 spinel ferrites RT,TN=9K normal spinel N-type; a0=844pm Ms K1 lambda empty rho=1,2026-03-22T14:00:00.000Z,manual-import
+gamma-Fe2O3,985,,кубическая,-0.005,,,Table 11.23 spinel ferrites RT,Tc estimate footnote(b); a0=834pm Ms=0.43MAm K1 -5kJ/m3; reverts alpha-Fe2O3 above 800K,2026-03-22T14:00:00.000Z,manual-import
+SrFe12O19,746,,гексагональная,0.35,,,Table 11.24 hexagonal ferrites (SrM),T11.24 a=589pm c=2304pm m0=20.2muB/fu Ms=0.38MAm mu0H0=1.8T kappa=1.4,2026-03-22T14:00:00.000Z,manual-import
+PbFe12O19,725,,гексагональная,0.25,,,Table 11.24 hexagonal ferrites (PbM),T11.24 a=590pm c=2309pm m0=19.6muB/fu Ms=0.33MAm mu0H0=1.5T kappa=1.4,2026-03-22T14:00:00.000Z,manual-import
+BaFe16O27,728,,гексагональная,0.30,,,Table 11.24 W-type hexagonal ferrite (BaW),T11.24 a=588pm c=3250pm m0=27.6muB/fu Ms=0.41MAm mu0H0=1.5T kappa=1.2,2026-03-22T14:00:00.000Z,manual-import
+Ba2Fe24O46,735,,гексагональная,0.30,,,Table 11.24 X-type hexagonal ferrite (BaX),T11.24 a=588pm c=5570pm m0=47.5muB/fu Ms=0.28MAm mu0H0=1.6T kappa=1.3,2026-03-22T14:00:00.000Z,manual-import
+FeS,588,,гексагональная,0.01,,,Table 11.26 NiAs-type sulphides/selenides,T11.26 af Ms=0.63MAm,2026-03-22T14:00:00.000Z,manual-import
+Fe7S8,598,,гексагональная,0.32,,,Table 11.26 NiAs-type sulphides/selenides,T11.26 fi Ms=0.15MAm,2026-03-22T14:00:00.000Z,manual-import
+Fe3S4,600,,гексагональная,1.2,,,Table 11.26 NiAs-type sulphides/selenides,T11.26 fi Ms=0.58MAm kappa=1.7,2026-03-22T14:00:00.000Z,manual-import
+Fe7Se8,448,,гексагональная,0.25,,,Table 11.26 NiAs-type sulphides/selenides,T11.26 fi Ms=0.07MAm,2026-03-22T14:00:00.000Z,manual-import
+Fe3Se4,314,,гексагональная,,,,Table 11.26 NiAs-type sulphides/selenides,T11.26 fi Ms~0 K1 n.a.,2026-03-22T14:00:00.000Z,manual-import

@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "start:no-db": "node -e \"const { spawnSync } = require('child_process'); const r = spawnSync('node', ['dist/server.js'], { stdio: 'inherit', env: { ...process.env, SKIP_DB: '1' } }); process.exit(r.status === null ? 1 : r.status);\""
   },
   "dependencies": {
     "axios": "^1.7.0",

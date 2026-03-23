@@ -11,5 +11,7 @@ Python-сервис для предсказания температуры Кю�
 - Запустить: `uvicorn main:app --reload --port 8001`
 
 После запуска сервис будет принимать POST-запросы на /predict с телом:
-{ "formulas": ["Fe3O4", "Nd2Fe14B"] }
+{ "formulas": ["Fe3O4", "Nd2Fe14B"], "model": "rf" | "crabnet" }
+
+Docker-образ собирается из **корня репозитория**: `docker build -f docker/model-service.Dockerfile -t curie-model .`
 

@@ -7,10 +7,10 @@ exports.predictCurieTemperature = predictCurieTemperature;
 const axios_1 = __importDefault(require("axios"));
 const config_1 = require("../config");
 // Вызывает Python-сервис модели и возвращает список предсказаний
-async function predictCurieTemperature(formulas) {
+async function predictCurieTemperature(formulas, model = "rf") {
     const url = `${config_1.config.modelServiceUrl}/predict`;
     try {
-        const response = await axios_1.default.post(url, { formulas });
+        const response = await axios_1.default.post(url, { formulas, model });
         return response.data.results;
     }
     catch (err) {

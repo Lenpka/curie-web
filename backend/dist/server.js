@@ -20,8 +20,13 @@ const classify_1 = require("./routes/classify");
 const cif_1 = require("./routes/cif");
 const auth_1 = require("./routes/auth");
 async function main() {
-    await (0, postgres_1.initDb)();
-    await (0, userStorage_1.ensureFirstUserIsAdmin)(config_1.config.adminEmails);
+    if (!config_1.config.skipDb) {
+        await (0, postgres_1.initDb)();
+        await (0, userStorage_1.ensureFirstUserIsAdmin)(config_1.config.adminEmails);
+    }
+    else {
+        console.warn("SKIP_DB=1: PostgreSQL не инициализирован. Работают статика и /api/predict; вход и разметка без БД не работают.");
+    }
     const app = (0, express_1.default)();
     app.use((0, helmet_1.default)());
     app.use((0, cors_1.default)({

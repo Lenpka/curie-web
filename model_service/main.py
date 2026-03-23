@@ -10,8 +10,9 @@ from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
 
-from model_loader import curie_model_service
-from errors import InvalidFormulaError
+from model_loader import get_curie_model_service
+from crabnet_loader import crabnet_model_service
+from errors import CurieModelLoadError, InvalidFormulaError
 from schemas import PredictRequest, PredictResponse, PredictResult
 
 
@@ -39,9 +40,36 @@ def predict(request: PredictRequest) -> PredictResponse:
     if not request.formulas:
         raise HTTPException(status_code=400, detail="Список формул пуст.")
 
-    # Базовая реализация: пробрасывает исключения наверх.
     try:
-        tuples = curie_model_service.predict_for_formulas(request.formulas)
+        if request.model == "crabnet":
+            try:
+                tuples = crabnet_model_service.predict_for_formulas(request.formulas)
+            except FileNotFoundError as e:
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "code": "crabnet_weights_missing",
+                        "message": str(e),
+                    },
+                ) from e
+            except RuntimeError as e:
+                if "CrabNet не установлен" in str(e):
+                    raise HTTPException(
+                        status_code=503,
+                        detail={"code": "crabnet_dependency", "message": str(e)},
+                    ) from e
+                raise
+        else:
+            try:
+                tuples = get_curie_model_service().predict_for_formulas(request.formulas)
+            except CurieModelLoadError as e:
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "code": "sklearn_model_load_failed",
+                        "message": str(e),
+                    },
+                ) from e
     except InvalidFormulaError as inv:
         detail = {
             "code": "invalid_formula",

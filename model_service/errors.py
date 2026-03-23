@@ -1,3 +1,7 @@
+class CurieModelLoadError(RuntimeError):
+    """Не удалось загрузить curie_model.joblib / scaler (часто несовместимость версии scikit-learn)."""
+
+
 class InvalidFormulaError(ValueError):
     def __init__(
         self,

@@ -17,8 +17,14 @@ import { registerCifRoute } from "./routes/cif";
 import { registerAuthRoutes } from "./routes/auth";
 
 async function main() {
-  await initDb();
-  await ensureFirstUserIsAdmin(config.adminEmails);
+  if (!config.skipDb) {
+    await initDb();
+    await ensureFirstUserIsAdmin(config.adminEmails);
+  } else {
+    console.warn(
+      "SKIP_DB=1: PostgreSQL не инициализирован. Работают статика и /api/predict; вход и разметка без БД не работают."
+    );
+  }
 
   const app = express();
 

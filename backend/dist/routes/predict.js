@@ -4,7 +4,8 @@ exports.registerPredictRoute = registerPredictRoute;
 const modelService_1 = require("../services/modelService");
 function registerPredictRoute(router) {
     router.post("/predict", async (req, res) => {
-        const { formulas } = req.body;
+        const { formulas, model } = req.body;
+        const backend = model === "crabnet" ? "crabnet" : "rf";
         if (!Array.isArray(formulas) || formulas.length === 0) {
             return res
                 .status(400)
@@ -19,8 +20,8 @@ function registerPredictRoute(router) {
                 .json({ error: "No valid formula provided after cleanup" });
         }
         try {
-            const results = await (0, modelService_1.predictCurieTemperature)(cleaned);
-            return res.json({ results });
+            const results = await (0, modelService_1.predictCurieTemperature)(cleaned, backend);
+            return res.json({ results, model: backend });
         }
         catch (err) {
             const e = err;
