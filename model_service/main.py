@@ -19,6 +19,24 @@ from schemas import PredictRequest, PredictResponse, PredictResult
 app = FastAPI(title="Curie Temperature Model Service", version="0.1.0")
 
 
+@app.get("/")
+def root() -> dict:
+    """
+    Корень API (иначе в браузере видно только {\"detail\":\"Not Found\"}).
+    Веб-интерфейс — отдельный Node-сервис; здесь только REST.
+    """
+    return {
+        "service": "curie-model",
+        "version": "0.1.0",
+        "endpoints": {
+            "health": "/health",
+            "predict": "POST /predict",
+            "docs": "/docs",
+        },
+        "hint": "Откройте URL фронтенда (Node), не этот сервис — здесь только API.",
+    }
+
+
 @app.get("/health")
 def health() -> dict:
     """Простой health-check для оркестратора/бэкенда."""
