@@ -22,7 +22,9 @@
 
 3. **Файлы моделей**  
    - **CrabNet:** `model_service/weights/UnnamedModel.pth` — должен попасть в образ (уже под `COPY model_service/`).  
-   - **RandomForest:** `curie_model.joblib` и `curie_scaler.joblib` в **корне репозитория** (рядом с `train_curie_three_versions.py`). Если файлов нет — RF вернёт 503; CrabNet работает.  
+   - **RandomForest:** нужны **`curie_model.joblib`** и **`curie_scaler.joblib`**. В Docker они ищутся в **`/app/`** (рядом с `train_curie_three_versions.py`).  
+     - **Локально / Compose:** положите оба файла в **корень репозитория** и смонтируйте в контейнер (как в `docker-compose.yml`) **или** раскомментируйте строку `COPY curie_model.joblib curie_scaler.joblib /app/` в `docker/model-service.Dockerfile` и закоммитьте файлы в репо.  
+     - **Render Free и другие облака:** без этих файлов в образе RF даст **503** и `FileNotFoundError: ... '/app/curie_model.joblib'` — это **не** ошибка sklearn, а отсутствие артефактов. **Платный persistent disk не обязателен:** закоммитьте `curie_model.joblib` и `curie_scaler.joblib` в репозиторий и в `docker/model-service.Dockerfile` оставьте строку `COPY curie_model.joblib curie_scaler.joblib /app/` — файлы попадут в образ при сборке на Render (бесплатный инстанс подходит). **Persistent disk** (Render Starter+) — опция, если не хотите хранить joblib в git: смонтировать диск и задать `CURIE_MODEL_PATH` / `CURIE_SCALER_PATH`.  
    - Если pickle sklearn несовместим — переобучите RF или используйте то же окружение sklearn, что при сохранении.  
      Для этого при сборке Docker-образа model-service используйте `USE_LEGACY_SKLEARN=1` (sklearn==1.0.2).
 

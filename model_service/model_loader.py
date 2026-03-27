@@ -3,7 +3,7 @@
 
 Этот модуль опирается на существующий код из train_curie_three_versions.py и predict_curie.py:
 - использует BASE_DIR и formula_to_vector из train_curie_three_versions;
-- ожидает, что в BASE_DIR лежат curie_model.joblib и curie_scaler.joblib.
+- ожидает curie_model.joblib и curie_scaler.joblib (по умолчанию в BASE_DIR; см. CURIE_MODEL_PATH / CURIE_SCALER_PATH).
 
 Загрузка sklearn-модели отложена до первого запроса model=rf, чтобы сервис с CrabNet
 поднимался даже при несовместимой версии scikit-learn со старым pickle.
@@ -29,8 +29,11 @@ if REPO_ROOT not in sys.path:
 from train_curie_three_versions import BASE_DIR, formula_to_vector
 
 
-MODEL_PATH = os.path.join(BASE_DIR, "curie_model.joblib")
-SCALER_PATH = os.path.join(BASE_DIR, "curie_scaler.joblib")
+def _resolve_rf_paths() -> Tuple[str, str]:
+    """Пути к артефактам RF: по умолчанию рядом с train_curie_three_versions.py (/app в Docker)."""
+    model = os.environ.get("CURIE_MODEL_PATH") or os.path.join(BASE_DIR, "curie_model.joblib")
+    scaler = os.environ.get("CURIE_SCALER_PATH") or os.path.join(BASE_DIR, "curie_scaler.joblib")
+    return model, scaler
 
 _curie_instance: Optional["CurieModelService"] = None
 _curie_load_error: Optional[str] = None
@@ -40,12 +43,12 @@ class CurieModelService:
     """Обёртка над моделью и скейлером для предсказаний по формуле."""
 
     def __init__(self) -> None:
+        self._model_path, self._scaler_path = _resolve_rf_paths()
         self.model, self.scaler = self._load_model_and_scaler()
 
-    @staticmethod
-    def _load_model_and_scaler():
-        model = joblib.load(MODEL_PATH)
-        scaler = joblib.load(SCALER_PATH)
+    def _load_model_and_scaler(self):
+        model = joblib.load(self._model_path)
+        scaler = joblib.load(self._scaler_path)
         return model, scaler
 
     def predict_for_formulas(self, formulas: Iterable[str]) -> List[Tuple[str, float, float]]:
@@ -82,10 +85,19 @@ def get_curie_model_service() -> CurieModelService:
     try:
         _curie_instance = CurieModelService()
         return _curie_instance
+    except FileNotFoundError as e:
+        mp, sp = _resolve_rf_paths()
+        _curie_load_error = (
+            f"{type(e).__name__}: {e}. "
+            "Нет файлов RandomForest: положите curie_model.joblib и curie_scaler.joblib в образ "
+            "(раскомментируйте COPY в docker/model-service.Dockerfile) или на persistent disk и задайте "
+            f"CURIE_MODEL_PATH / CURIE_SCALER_PATH (сейчас ожидаются: {mp}, {sp})."
+        )
+        raise CurieModelLoadError(_curie_load_error) from e
     except Exception as e:
         _curie_load_error = (
             f"{type(e).__name__}: {e}. "
-            "Модель сохранена под другой версией scikit-learn: переобучите и сохраните joblib "
-            "текущим sklearn или установите ту же версию sklearn, что при обучении (см. предупреждение pip)."
+            "Если это не отсутствие файлов — часто несовместимость scikit-learn: переобучите и сохраните joblib "
+            "текущим sklearn или используйте ту же версию sklearn, что при обучении (USE_LEGACY_SKLEARN=1 в Docker)."
         )
         raise CurieModelLoadError(_curie_load_error) from e
