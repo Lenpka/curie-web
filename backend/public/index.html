@@ -435,6 +435,27 @@
       --text-muted: #475569;
       --error: #dc2626;
     }
+    /* Светлая палитра для блока «Дополнительно» (details) — без «синего тумана» из тёмной темы */
+    body.theme-light .form-details {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    body.theme-light .form-details summary {
+      color: #0369a1;
+      font-weight: 650;
+    }
+    body.theme-light .form-details summary:hover {
+      color: #0c4a6e;
+    }
+    body.theme-light .form-details .hint-inline {
+      color: #64748b;
+    }
+    body.theme-light .theme-toggle:hover {
+      background: var(--bg-input);
+      color: var(--text);
+      border-color: var(--border-focus);
+    }
     /* Skeleton rows for perceived speed */
     .skeleton-cell {
       position: relative;
