@@ -3,6 +3,18 @@ const apiUrl = "/api/predict";
 
 //Тема
 const THEME_KEY = "curie-theme";
+const DRAFT_KEY = "curie-draft-v1";
+const LABEL_DRAFT_KEY = "curie-label-draft-v1";
+/** Последняя успешно отправленная строка разметки (для «Как в прошлый раз»). */
+const LAST_LABEL_SUCCESS_KEY = "curie-label-last-success-v1";
+
+function debounce(fn, ms) {
+  let t = null;
+  return (...args) => {
+    if (t) window.clearTimeout(t);
+    t = window.setTimeout(() => fn(...args), ms);
+  };
+}
 
 // TRANSLATIONS: все текстовые строки интерфейса для RU и EN
 const translations = {
@@ -77,6 +89,11 @@ const translations = {
     labelStatusSuccess: "Разметка отправлена.",
     labelErrorRequired: "Укажите формулу.",
     labelErrorRequest: "Не удалось сохранить разметку.",
+    labelWorkflowHint:
+      "После успешной отправки очищаются формула и T_C; источник и остальные поля остаются — удобно для серии похожих записей. «Как в прошлый раз» подставляет полностью последнюю отправленную строку.",
+    btnLabelRestoreLast: "Как в прошлый раз",
+    labelRestoreHint:
+      "Вставляет последнюю успешно отправленную запись — отредактируйте формулу и при необходимости остальное.",
 
     // CLASSIFY FORM (RU)
     classifyCardTitle: "Классификация по типу магнетизма",
@@ -163,6 +180,11 @@ const translations = {
     labelStatusSuccess: "Annotation submitted.",
     labelErrorRequired: "Please enter a formula.",
     labelErrorRequest: "Failed to save annotation.",
+    labelWorkflowHint:
+      "After a successful save, the formula and T_C are cleared; source and other fields stay filled for the next similar entry. «Reuse last» pastes the full last submitted row.",
+    btnLabelRestoreLast: "Reuse last",
+    labelRestoreHint:
+      "Inserts the last successfully submitted row — edit the formula and other fields if needed.",
 
     // CLASSIFY FORM (EN)
     classifyCardTitle: "Classification by magnetic type",
@@ -223,6 +245,9 @@ const els = {
   labelCommentLabel: document.getElementById("label-comment-label"),
   labelCommentInput: document.getElementById("label-comment"),
   labelCardHint: document.getElementById("label-card-hint"),
+  labelWorkflowHint: document.getElementById("label-workflow-hint"),
+  labelRestoreBtn: document.getElementById("btn-label-restore-last"),
+  labelRestoreHint: document.getElementById("label-restore-hint"),
   labelOptionalSummary: document.getElementById("label-optional-summary"),
   labelOptionalHint: document.getElementById("label-optional-hint"),
   labelEasyAxisLabel: document.getElementById("label-easy-axis-label"),
@@ -281,6 +306,112 @@ const els = {
 
 const fetchOpts = { credentials: "include" };
 
+function setLoadingPredict(isLoading, activeModel) {
+  if (els.btnPredictRf) {
+    els.btnPredictRf.disabled = isLoading;
+    els.btnPredictRf.dataset.loading = isLoading && activeModel === "rf" ? "1" : "0";
+  }
+  if (els.btnPredictCrabnet) {
+    els.btnPredictCrabnet.disabled = isLoading;
+    els.btnPredictCrabnet.dataset.loading = isLoading && activeModel === "crabnet" ? "1" : "0";
+  }
+}
+
+function showSkeletonResults(rows = 4) {
+  if (!els.tbody || !els.table) return;
+  els.tbody.innerHTML = "";
+  for (let i = 0; i < rows; i++) {
+    const tr = document.createElement("tr");
+    for (let j = 0; j < 3; j++) {
+      const td = document.createElement("td");
+      td.className = "skeleton-cell";
+      tr.appendChild(td);
+    }
+    els.tbody.appendChild(tr);
+  }
+  els.table.style.display = "";
+}
+
+function setInvalid(el, isInvalid) {
+  if (!el) return;
+  el.classList.toggle("is-invalid", Boolean(isInvalid));
+}
+
+function focusFirst() {
+  const target = els.textarea || els.labelFormulaInput;
+  if (!target) return;
+  try {
+    target.focus();
+    if (typeof target.setSelectionRange === "function" && typeof target.value === "string") {
+      const end = target.value.length;
+      target.setSelectionRange(end, end);
+    }
+  } catch (_) {}
+}
+
+function focusLabelFormula() {
+  if (!els.labelFormulaInput) return;
+  try {
+    els.labelFormulaInput.focus();
+    const v = els.labelFormulaInput.value || "";
+    els.labelFormulaInput.setSelectionRange(v.length, v.length);
+  } catch (_) {}
+}
+
+function captureLabelSnapshot() {
+  return {
+    formula: els.labelFormulaInput?.value?.trim() ?? "",
+    tcValue: els.labelTcInput?.value?.trim() ?? "",
+    tcUnit: els.labelTcUnitSelect?.value ?? "K",
+    structureType: els.labelStructureInput?.value?.trim() ?? "",
+    synagonia: els.labelSynSelect?.value ?? "",
+    anisotropy: els.labelAnisoInput?.value?.trim() ?? "",
+    easyAxis: els.labelEasyAxisInput?.value?.trim() ?? "",
+    source: els.labelSourceInput?.value?.trim() ?? "",
+    comment: els.labelCommentInput?.value?.trim() ?? ""
+  };
+}
+
+function applyLabelSnapshot(d) {
+  if (!d || typeof d !== "object") return;
+  if (els.labelFormulaInput) els.labelFormulaInput.value = d.formula ?? "";
+  if (els.labelTcInput) els.labelTcInput.value = d.tcValue ?? "";
+  if (els.labelTcUnitSelect && d.tcUnit) els.labelTcUnitSelect.value = d.tcUnit;
+  if (els.labelStructureInput) els.labelStructureInput.value = d.structureType ?? "";
+  if (els.labelSynSelect) els.labelSynSelect.value = d.synagonia ?? "";
+  if (els.labelAnisoInput) els.labelAnisoInput.value = d.anisotropy ?? "";
+  if (els.labelEasyAxisInput) els.labelEasyAxisInput.value = d.easyAxis ?? "";
+  if (els.labelSourceInput) els.labelSourceInput.value = d.source ?? "";
+  if (els.labelCommentInput) els.labelCommentInput.value = d.comment ?? "";
+}
+
+function loadLastLabelSuccess() {
+  try {
+    const raw = window.localStorage.getItem(LAST_LABEL_SUCCESS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (_) {
+    return null;
+  }
+}
+
+function saveLastLabelSuccess(snap) {
+  try {
+    window.localStorage.setItem(LAST_LABEL_SUCCESS_KEY, JSON.stringify(snap));
+  } catch (_) {}
+}
+
+function persistLabelDraftNow() {
+  try {
+    window.localStorage.setItem(LABEL_DRAFT_KEY, JSON.stringify(captureLabelSnapshot()));
+  } catch (_) {}
+}
+
+function updateRestoreLastButton() {
+  if (!els.labelRestoreBtn) return;
+  els.labelRestoreBtn.disabled = !loadLastLabelSuccess();
+}
+
 function updateAuthUI(user) {
   if (els.authButtons) els.authButtons.style.display = user ? "none" : "flex";
   if (els.userInfo) els.userInfo.style.display = user ? "flex" : "none";
@@ -338,6 +469,9 @@ function applyTranslations() {
       "T<sub>C</sub>"
     );
   }
+  if (els.labelWorkflowHint) els.labelWorkflowHint.textContent = t.labelWorkflowHint;
+  if (els.labelRestoreHint) els.labelRestoreHint.textContent = t.labelRestoreHint;
+  if (els.labelRestoreBtn) els.labelRestoreBtn.textContent = t.btnLabelRestoreLast;
   if (els.labelOptionalSummary) els.labelOptionalSummary.textContent = t.labelOptionalSummary;
   if (els.labelOptionalHint) els.labelOptionalHint.textContent = t.labelOptionalHint;
   if (els.labelStructureLabel)
@@ -454,6 +588,145 @@ if (els.themeToggle) {
   });
 }
 
+(function initDraftsAndKeyboard() {
+  function restoreDrafts() {
+    try {
+      const raw = window.localStorage.getItem(DRAFT_KEY);
+      if (raw && els.textarea && !els.textarea.value) els.textarea.value = raw;
+    } catch (_) {}
+    try {
+      const raw = window.localStorage.getItem(LABEL_DRAFT_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (els.labelFormulaInput && !els.labelFormulaInput.value && d.formula) els.labelFormulaInput.value = d.formula;
+      if (els.labelTcInput && !els.labelTcInput.value && d.tcValue !== undefined && d.tcValue !== null)
+        els.labelTcInput.value = String(d.tcValue);
+      if (els.labelTcUnitSelect && d.tcUnit) els.labelTcUnitSelect.value = d.tcUnit;
+      if (els.labelStructureInput && !els.labelStructureInput.value && d.structureType)
+        els.labelStructureInput.value = d.structureType;
+      if (els.labelSynSelect && d.synagonia !== undefined && d.synagonia !== null)
+        els.labelSynSelect.value = d.synagonia;
+      if (els.labelAnisoInput && !els.labelAnisoInput.value && d.anisotropy !== undefined && d.anisotropy !== null)
+        els.labelAnisoInput.value = String(d.anisotropy);
+      if (els.labelEasyAxisInput && !els.labelEasyAxisInput.value && d.easyAxis)
+        els.labelEasyAxisInput.value = d.easyAxis;
+      if (els.labelSourceInput && !els.labelSourceInput.value && d.source)
+        els.labelSourceInput.value = d.source;
+      if (els.labelCommentInput && !els.labelCommentInput.value && d.comment)
+        els.labelCommentInput.value = d.comment;
+    } catch (_) {}
+  }
+
+  const saveDraftFormulas = debounce(() => {
+    try {
+      if (els.textarea) window.localStorage.setItem(DRAFT_KEY, els.textarea.value || "");
+    } catch (_) {}
+  }, 250);
+
+  const saveDraftLabel = debounce(() => {
+    try {
+      const d = {
+        formula: els.labelFormulaInput?.value?.trim() ?? "",
+        tcValue: els.labelTcInput?.value?.trim() ?? "",
+        tcUnit: els.labelTcUnitSelect?.value ?? "K",
+        structureType: els.labelStructureInput?.value?.trim() ?? "",
+        synagonia: els.labelSynSelect?.value ?? "",
+        anisotropy: els.labelAnisoInput?.value?.trim() ?? "",
+        easyAxis: els.labelEasyAxisInput?.value?.trim() ?? "",
+        source: els.labelSourceInput?.value?.trim() ?? "",
+        comment: els.labelCommentInput?.value?.trim() ?? ""
+      };
+      window.localStorage.setItem(LABEL_DRAFT_KEY, JSON.stringify(d));
+    } catch (_) {}
+  }, 300);
+
+  restoreDrafts();
+  updateRestoreLastButton();
+  focusFirst();
+
+  if (els.textarea) {
+    els.textarea.addEventListener("input", () => {
+      setInvalid(els.textarea, false);
+      saveDraftFormulas();
+    });
+  }
+  if (els.labelFormulaInput) {
+    els.labelFormulaInput.addEventListener("input", () => {
+      setInvalid(els.labelFormulaInput, false);
+      saveDraftLabel();
+    });
+  }
+
+  [
+    els.labelTcInput,
+    els.labelTcUnitSelect,
+    els.labelStructureInput,
+    els.labelSynSelect,
+    els.labelAnisoInput,
+    els.labelEasyAxisInput,
+    els.labelSourceInput,
+    els.labelCommentInput
+  ].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", saveDraftLabel);
+    el.addEventListener("change", saveDraftLabel);
+  });
+
+  function focusNextField(fromEl) {
+    const card = fromEl?.closest?.(".card") || document;
+    const focusables = Array.from(
+      card.querySelectorAll(
+        "textarea, input:not([type='file']):not([disabled]), select:not([disabled]), button:not([disabled])"
+      )
+    ).filter((n) => n && n.offsetParent !== null);
+    const i = focusables.indexOf(fromEl);
+    const next = i >= 0 ? focusables[i + 1] : null;
+    if (next && typeof next.focus === "function") next.focus();
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      const active = document.activeElement;
+      if (active === els.textarea || (active && active.closest && active.closest(".card-main"))) {
+        e.preventDefault();
+        if (els.btnPredictRf) els.btnPredictRf.click();
+        return;
+      }
+    }
+    if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      const active = document.activeElement;
+      if (!active) return;
+      if (active === els.textarea) return; // keep Enter for multiline formulas
+      if (
+        active === els.labelFormulaInput ||
+        active === els.labelTcInput ||
+        active === els.labelAnisoInput ||
+        active === els.labelEasyAxisInput ||
+        active === els.labelStructureInput ||
+        active === els.labelSourceInput ||
+        active === els.labelCommentInput ||
+        active === els.labelSynSelect ||
+        active === els.labelTcUnitSelect
+      ) {
+        e.preventDefault();
+        focusNextField(active);
+      }
+    }
+  });
+
+  updateRestoreLastButton();
+  if (els.labelRestoreBtn) {
+    els.labelRestoreBtn.addEventListener("click", () => {
+      const last = loadLastLabelSuccess();
+      if (!last) return;
+      applyLabelSnapshot(last);
+      persistLabelDraftNow();
+      if (els.labelError) els.labelError.textContent = "";
+      focusLabelFormula();
+    });
+  }
+})();
+
 (function initAuth() {
   loadAuth();
   if (els.btnShowLogin) els.btnShowLogin.addEventListener("click", () => showAuthCard("login"));
@@ -549,13 +822,14 @@ function wirePredictButton(btn, model) {
       .map((s) => s.trim())
       .filter((s) => s && !s.startsWith("#"));
     if (lines.length === 0) {
+      setInvalid(els.textarea, true);
       if (els.error) els.error.textContent = t.errorNoFormulas;
       return;
     }
 
-    if (els.btnPredictRf) els.btnPredictRf.disabled = true;
-    if (els.btnPredictCrabnet) els.btnPredictCrabnet.disabled = true;
+    setLoadingPredict(true, model);
     if (els.status) els.status.textContent = t.statusLoading;
+    showSkeletonResults(4);
 
     try {
       const res = await fetch(apiUrl, {
@@ -566,6 +840,7 @@ function wirePredictButton(btn, model) {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
+        if (els.table) els.table.style.display = "none";
         if (data.code === "invalid_formula") {
           let msg = t.errorInvalidFormula.replace("{formula}", data.formula || "?");
           if (data.suggestion) {
@@ -609,6 +884,7 @@ function wirePredictButton(btn, model) {
       }
 
       if (els.tbody) {
+        els.tbody.innerHTML = "";
         data.results.forEach((r) => {
           const tr = document.createElement("tr");
           const tdF = document.createElement("td");
@@ -630,8 +906,7 @@ function wirePredictButton(btn, model) {
       console.error(e);
       if (els.error) els.error.textContent = t.errorRequest;
     } finally {
-      if (els.btnPredictRf) els.btnPredictRf.disabled = false;
-      if (els.btnPredictCrabnet) els.btnPredictCrabnet.disabled = false;
+      setLoadingPredict(false, model);
     }
   });
 }
@@ -661,11 +936,13 @@ if (els.labelButton) {
     const cifFile = els.labelCifInput?.files?.[0] ?? null;
 
     if (!formula) {
+      setInvalid(els.labelFormulaInput, true);
       if (els.labelError) els.labelError.textContent = t.labelErrorRequired;
       return;
     }
 
     els.labelButton.disabled = true;
+    els.labelButton.dataset.loading = "1";
     if (els.labelStatus) els.labelStatus.textContent = t.statusLoading;
 
     try {
@@ -694,15 +971,13 @@ if (els.labelButton) {
 
       if (res.ok && data.status === "ok") {
         if (els.labelStatus) els.labelStatus.textContent = t.labelStatusSuccess;
+        saveLastLabelSuccess(captureLabelSnapshot());
         if (els.labelFormulaInput) els.labelFormulaInput.value = "";
         if (els.labelTcInput) els.labelTcInput.value = "";
-        if (els.labelAnisoInput) els.labelAnisoInput.value = "";
-        if (els.labelEasyAxisInput) els.labelEasyAxisInput.value = "";
-        if (els.labelStructureInput) els.labelStructureInput.value = "";
-        if (els.labelSynSelect) els.labelSynSelect.selectedIndex = 0;
-        if (els.labelSourceInput) els.labelSourceInput.value = "";
-        if (els.labelCommentInput) els.labelCommentInput.value = "";
         if (els.labelCifInput) els.labelCifInput.value = "";
+        persistLabelDraftNow();
+        updateRestoreLastButton();
+        focusLabelFormula();
       } else {
         if (els.labelError) els.labelError.textContent = data.error || t.labelErrorRequest;
       }
@@ -711,6 +986,7 @@ if (els.labelButton) {
       if (els.labelError) els.labelError.textContent = t.labelErrorRequest;
     } finally {
       els.labelButton.disabled = false;
+      els.labelButton.dataset.loading = "0";
     }
   });
 }

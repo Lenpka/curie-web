@@ -39,7 +39,7 @@ COPY model_service/ /app/model_service/
 
 # RandomForest: положите curie_model.joblib и curie_scaler.joblib в корень репо и раскомментируйте
 # (иначе в облаке — FileNotFoundError /app/curie_model.joblib; альтернатива: disk + CURIE_MODEL_PATH / CURIE_SCALER_PATH):
-# COPY curie_model.joblib curie_scaler.joblib /app/
+COPY curie_model.joblib curie_scaler.joblib /app/
 
 ENV PYTHONPATH=/app
 ENV CRABNET_FORCE_CPU=1
