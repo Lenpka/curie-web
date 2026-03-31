@@ -4,8 +4,8 @@ import { predictCurieTemperature } from "../services/modelService";
 
 export function registerPredictRoute(router: Router): void {
   router.post("/predict", async (req: Request, res: Response) => {
-    const { formulas, model } = req.body as { formulas?: unknown; model?: unknown };
-    const backend = model === "crabnet" ? "crabnet" : "rf";
+    const { formulas } = req.body as { formulas?: unknown; model?: unknown };
+    const backend = "crabnet";
 
     if (!Array.isArray(formulas) || formulas.length === 0) {
       return res

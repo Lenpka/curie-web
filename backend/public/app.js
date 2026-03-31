@@ -689,7 +689,7 @@ if (els.themeToggle) {
       const active = document.activeElement;
       if (active === els.textarea || (active && active.closest && active.closest(".card-main"))) {
         e.preventDefault();
-        if (els.btnPredictRf) els.btnPredictRf.click();
+        if (els.btnPredictCrabnet) els.btnPredictCrabnet.click();
         return;
       }
     }
@@ -911,7 +911,6 @@ function wirePredictButton(btn, model) {
   });
 }
 
-wirePredictButton(els.btnPredictRf, "rf");
 wirePredictButton(els.btnPredictCrabnet, "crabnet");
 
 // Разметка: POST /api/label → backend сохраняет в data/user_labels.csv

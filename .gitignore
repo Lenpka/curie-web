@@ -1,0 +1,22 @@
+# data / experiments
+helpful_data/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.venv-rf/
+.env
+.env.*
+
+# node
+backend/node_modules/
+**/node_modules/
+backend/dist/
+
+# cursor / ide
+.cursor/
+.vscode/
+
+# logs
+*.log
