@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Curie T₍C₎ predictor</title>
+  <title>Smartnetic</title>
+  <link rel="icon" type="image/png" href="/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -78,7 +79,14 @@
       letter-spacing: -0.02em;
       line-height: 1.2;
     }
-    .title span:first-child { font-size: 1.4em; }
+    .title-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+      flex: 0 0 auto;
+    }
     .subtitle {
       font-size: clamp(0.95rem, 2vw, 1.1rem);
       color: var(--text-muted);
@@ -487,7 +495,7 @@
     <header>
       <div>
         <div class="title">
-          <span>🧲</span>
+          <img class="title-logo" src="/logo.png" alt="Smartnetic logo" />
           <span id="title-text">Предсказание температуры Кюри</span>
         </div>
         <div class="subtitle" id="subtitle-text">
