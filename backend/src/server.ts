@@ -17,13 +17,23 @@ import { registerCifRoute } from "./routes/cif";
 import { registerAuthRoutes } from "./routes/auth";
 
 async function main() {
-  if (!config.skipDb) {
-    await initDb();
-    await ensureFirstUserIsAdmin(config.adminEmails);
-  } else {
+  if (config.skipDb) {
     console.warn(
       "SKIP_DB=1: PostgreSQL не инициализирован. Работают статика и /api/predict; вход и разметка без БД не работают."
     );
+  } else {
+    try {
+      await initDb();
+      await ensureFirstUserIsAdmin(config.adminEmails);
+    } catch (e) {
+      if (config.requireDb) {
+        throw e;
+      }
+      console.warn(
+        "PostgreSQL недоступен при старте (initDb / ensureFirstUserIsAdmin). Продолжаем без БД: статика и /api/predict. Вход и разметка не будут работать, пока не восстановите DATABASE_URL или не задайте SKIP_DB=1. Чтобы снова падать при ошибке БД, задайте REQUIRE_DB=1.",
+        e
+      );
+    }
   }
 
   const app = express();

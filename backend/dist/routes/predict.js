@@ -4,8 +4,8 @@ exports.registerPredictRoute = registerPredictRoute;
 const modelService_1 = require("../services/modelService");
 function registerPredictRoute(router) {
     router.post("/predict", async (req, res) => {
-        const { formulas, model } = req.body;
-        const backend = model === "crabnet" ? "crabnet" : "rf";
+        const { formulas } = req.body;
+        const backend = "crabnet";
         if (!Array.isArray(formulas) || formulas.length === 0) {
             return res
                 .status(400)

@@ -20,12 +20,20 @@ const classify_1 = require("./routes/classify");
 const cif_1 = require("./routes/cif");
 const auth_1 = require("./routes/auth");
 async function main() {
-    if (!config_1.config.skipDb) {
-        await (0, postgres_1.initDb)();
-        await (0, userStorage_1.ensureFirstUserIsAdmin)(config_1.config.adminEmails);
+    if (config_1.config.skipDb) {
+        console.warn("SKIP_DB=1: PostgreSQL не инициализирован. Работают статика и /api/predict; вход и разметка без БД не работают.");
     }
     else {
-        console.warn("SKIP_DB=1: PostgreSQL не инициализирован. Работают статика и /api/predict; вход и разметка без БД не работают.");
+        try {
+            await (0, postgres_1.initDb)();
+            await (0, userStorage_1.ensureFirstUserIsAdmin)(config_1.config.adminEmails);
+        }
+        catch (e) {
+            if (config_1.config.requireDb) {
+                throw e;
+            }
+            console.warn("PostgreSQL недоступен при старте (initDb / ensureFirstUserIsAdmin). Продолжаем без БД: статика и /api/predict. Вход и разметка не будут работать, пока не восстановите DATABASE_URL или не задайте SKIP_DB=1. Чтобы снова падать при ошибке БД, задайте REQUIRE_DB=1.", e);
+        }
     }
     const app = (0, express_1.default)();
     app.use((0, helmet_1.default)());
